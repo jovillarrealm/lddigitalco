@@ -275,14 +275,20 @@
       }
     }
 
-    // Actualizar botón de WhatsApp de dudas con el contexto de la cápsula
+    // Actualizar datos del modal «Tengo una Duda» con el contexto de la cápsula (ADR 0006)
+    const modalCapsuleTitle = document.getElementById('duda-modal-capsule-title');
+    if (modalCapsuleTitle) {
+      modalCapsuleTitle.textContent = capsule.titulo;
+    }
+    const modalCapsuleSlug = document.getElementById('duda-capsule-slug');
+    if (modalCapsuleSlug) {
+      modalCapsuleSlug.value = capsule.slug;
+    }
+
     const dudaBtn = document.getElementById('doubt-btn');
     if (dudaBtn) {
-      const whatsappMsg = encodeURIComponent(
-        `Hola tutor de LDDIGITALCO, estoy viendo la "${capsule.titulo}" y tengo una duda puntual.`
-      );
       dudaBtn.onclick = function () {
-        window.open(`https://wa.me/573000000000?text=${whatsappMsg}`, '_blank');
+        openDudaModal();
       };
     }
   }
@@ -496,6 +502,158 @@
   }
 
   /**
+   * Abre el modal «Tengo una Duda» prellenando el contexto de la cápsula
+   */
+  function openDudaModal() {
+    const modal = document.getElementById('duda-modal');
+    if (!modal) return;
+
+    const capsule = getCurrentCapsule();
+    if (capsule) {
+      const modalCapsuleTitle = document.getElementById('duda-modal-capsule-title');
+      if (modalCapsuleTitle) modalCapsuleTitle.textContent = capsule.titulo;
+      const modalCapsuleSlug = document.getElementById('duda-capsule-slug');
+      if (modalCapsuleSlug) modalCapsuleSlug.value = capsule.slug;
+    }
+
+    const feedback = document.getElementById('duda-feedback');
+    if (feedback) {
+      feedback.className = 'hidden';
+      feedback.innerHTML = '';
+    }
+
+    modal.classList.remove('hidden');
+
+    const textarea = document.getElementById('duda-mensaje');
+    if (textarea) {
+      setTimeout(() => textarea.focus(), 60);
+    }
+  }
+
+  /**
+   * Cierra el modal «Tengo una Duda»
+   */
+  function closeDudaModal() {
+    const modal = document.getElementById('duda-modal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+
+    const dudaBtn = document.getElementById('doubt-btn');
+    if (dudaBtn) {
+      dudaBtn.focus();
+    }
+  }
+
+  /**
+   * Configura listeners para el modal y formulario de consultas al tutor
+   */
+  function setupDudaModal() {
+    const dudaBtn = document.getElementById('doubt-btn');
+    if (dudaBtn) {
+      dudaBtn.addEventListener('click', openDudaModal);
+    }
+
+    const closeBtn = document.getElementById('duda-close-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closeDudaModal);
+    }
+
+    const cancelBtn = document.getElementById('duda-cancel-btn');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', closeDudaModal);
+    }
+
+    const modal = document.getElementById('duda-modal');
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          closeDudaModal();
+        }
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+        closeDudaModal();
+      }
+    });
+
+    const form = document.getElementById('duda-form');
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const textarea = document.getElementById('duda-mensaje');
+        const slugInput = document.getElementById('duda-capsule-slug');
+        const feedback = document.getElementById('duda-feedback');
+        const submitBtn = document.getElementById('duda-submit-btn');
+        const submitText = document.getElementById('duda-submit-text');
+
+        const mensaje = textarea?.value?.trim();
+        const microcapsulaSlug = slugInput?.value?.trim() || getCurrentCapsule()?.slug;
+
+        if (!mensaje) {
+          if (feedback) {
+            feedback.className = 'p-4 rounded-xl bg-red-950/80 border border-red-500 text-red-200 text-sm font-medium';
+            feedback.innerHTML = '⚠️ Por favor, escriba su duda antes de enviarla.';
+          }
+          if (textarea) textarea.focus();
+          return;
+        }
+
+        if (submitBtn) submitBtn.disabled = true;
+        if (submitText) submitText.textContent = 'Enviando mi duda al tutor...';
+        if (feedback) {
+          feedback.className = 'hidden';
+          feedback.innerHTML = '';
+        }
+
+        try {
+          const res = await fetch('/api/consultas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              microcapsulaSlug,
+              mensaje,
+            }),
+          });
+
+          const data = await res.json();
+
+          if (res.ok && data.success) {
+            if (feedback) {
+              feedback.className = 'p-5 rounded-2xl bg-emerald-950/90 border-2 border-emerald-400 text-white text-sm sm:text-base leading-relaxed';
+              feedback.innerHTML = `
+                <div class="flex items-start gap-3">
+                  <span class="text-3xl">🎉</span>
+                  <div>
+                    <strong class="text-emerald-300 block text-base sm:text-lg mb-1 font-bold">¡Listo! Tu duda ha sido recibida por tu tutor de LDDIGITALCO.</strong>
+                    <p class="text-slate-200">Te responderemos muy pronto a tu correo.</p>
+                  </div>
+                </div>
+              `;
+            }
+            if (form) form.reset();
+            showToast('¡Listo! Tu duda ha sido recibida por tu tutor de LDDIGITALCO.');
+          } else {
+            if (feedback) {
+              feedback.className = 'p-4 rounded-xl bg-amber-950/80 border border-amber-500 text-amber-200 text-sm font-medium';
+              feedback.innerHTML = `⚠️ ${data.error || 'No se pudo enviar su duda. Por favor, intente nuevamente.'}`;
+            }
+          }
+        } catch (err) {
+          if (feedback) {
+            feedback.className = 'p-4 rounded-xl bg-red-950/80 border border-red-500 text-red-200 text-sm font-medium';
+            feedback.innerHTML = '⚠️ Ocurrió un error de conexión al enviar su duda. Verifique su internet e intente nuevamente.';
+          }
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
+          if (submitText) submitText.textContent = 'Enviar mi Duda al Tutor';
+        }
+      });
+    }
+  }
+
+  /**
    * Asignación de event listeners en elementos interactivos
    */
   function setupEventListeners() {
@@ -519,6 +677,8 @@
         renderCurrentCapsule();
       }
     });
+
+    setupDudaModal();
   }
 
   // Exponer API pública en window para interacción
@@ -529,6 +689,8 @@
     prevCapsule,
     toggleComplete,
     handleVideoEnded,
+    openDudaModal,
+    closeDudaModal,
     getState: () => ({ ...state }),
   };
 
