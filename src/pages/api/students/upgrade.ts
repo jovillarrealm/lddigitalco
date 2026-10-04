@@ -1,81 +1,45 @@
+// LDDIGITALCO — Endpoint de Actualización de Nivel de Acceso
+// Adaptador HTTP delgado delegando al módulo profundo AccesoEstudiante
+
 import type { APIRoute } from 'astro';
-import { getAuthServiceFromContext, getDbFromContext, getEnvFromContext } from '../../../lib/auth';
-import { upgradeStudentAccess, getStudentByEmail } from '../../../lib/db/estudiantes';
+import { getAccesoEstudianteFromContext, getEnvFromContext } from '../../../lib/auth';
 
 export const prerender = false;
 
 export const POST: APIRoute = async (context) => {
   const { request } = context;
-  const db = getDbFromContext(context);
-  const authService = getAuthServiceFromContext(context);
+  const auth = getAccesoEstudianteFromContext(context);
   const env = getEnvFromContext(context);
 
-  const session = await authService.getSessionFromRequest(request);
+  const session = await auth.getSessionFromRequest(request);
   const adminKeyHeader = request.headers.get('x-admin-key');
   const expectedAdminKey = env.ADMIN_KEY || 'dev-admin-secret';
-
-  const isAuthorized =
-    (session && session.rol === 'admin') ||
-    (adminKeyHeader && adminKeyHeader === expectedAdminKey);
-
-  if (!isAuthorized) {
-    const status = (!session && !adminKeyHeader) ? 401 : 403;
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: 'No autorizado. Se requieren credenciales de administrador para actualizar niveles de acceso.',
-      }),
-      { status, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
 
   let body: any = {};
   try {
     body = await request.json();
   } catch {
-    // Maybe empty or form
+    // Body opcional o vacío
   }
 
-  let email = body.email;
-  const nivelAcceso = body.nivelAcceso || 'inscripcion_completa';
-
-  if (!email) {
-    // Attempt to use current session student
-    const session = await authService.getSessionFromRequest(request);
-    if (session) {
-      email = session.email;
-    }
-  }
-
-  if (!email || typeof email !== 'string') {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: 'El campo correo electrónico es obligatorio para actualizar el nivel de acceso.',
-      }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-
-  const existing = await getStudentByEmail(db, email);
-  if (!existing) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: `Estudiante con correo '${email}' no encontrado.`,
-      }),
-      { status: 404, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-
-  const updatedStudent = await upgradeStudentAccess(db, email, nivelAcceso);
+  const result = await auth.actualizarNivelEstudiante({
+    email: body.email,
+    nivelAcceso: body.nivelAcceso,
+    adminKeyHeader,
+    expectedAdminKey,
+    session,
+  });
 
   return new Response(
     JSON.stringify({
-      success: true,
-      message: `Nivel de acceso actualizado exitosamente a '${nivelAcceso}'.`,
-      student: updatedStudent,
+      success: result.success,
+      ...(result.error ? { error: result.error } : {}),
+      ...(result.message ? { message: result.message } : {}),
+      ...(result.student ? { student: result.student } : {}),
     }),
-    { status: 200, headers: { 'Content-Type': 'application/json' } }
+    {
+      status: result.status,
+      headers: { 'Content-Type': 'application/json' },
+    }
   );
 };

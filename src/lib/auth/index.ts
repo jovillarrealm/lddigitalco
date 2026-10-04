@@ -1,3 +1,4 @@
+import { AccesoEstudiante } from './acceso-estudiante';
 import { AuthService } from './service';
 import { getEmailService } from '../email';
 import { createInMemoryD1 } from '../db/d1-memory';
@@ -62,7 +63,7 @@ export function getDbFromContext(context: AuthContextInput): D1Database {
   return env.DB || getDevDb();
 }
 
-export function getAuthServiceFromContext(context: AuthContextInput): AuthService {
+export function getAuthServiceFromContext(context: AuthContextInput): AccesoEstudiante {
   const env = getEnvFromContext(context);
   const db: D1Database = getDbFromContext(context);
   const secret: string = env.AUTH_SECRET || 'lddigitalco-secret-key-32-chars-minimum-dev';
@@ -70,7 +71,7 @@ export function getAuthServiceFromContext(context: AuthContextInput): AuthServic
   const appUrl = env.APP_URL || (context.url ? `${context.url.protocol}//${context.url.host}` : 'http://localhost:4321');
   const isProduction = env.NODE_ENV === 'production';
 
-  return new AuthService({
+  return new AccesoEstudiante({
     db,
     emailService,
     secret,
@@ -79,7 +80,10 @@ export function getAuthServiceFromContext(context: AuthContextInput): AuthServic
   });
 }
 
+export const getAccesoEstudianteFromContext = getAuthServiceFromContext;
 
 export * from './crypto';
 export * from './service';
+export * from './acceso-estudiante';
 export * from './tier';
+
