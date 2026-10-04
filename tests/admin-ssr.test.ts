@@ -47,4 +47,25 @@ describe('Admin SSR Environment Resilience', () => {
     expect(db).toBeDefined();
     expect(typeof db.prepare).toBe('function');
   });
+
+  it('handles Cloudflare v6 throwing runtime.env getter without crashing', () => {
+    const locals: any = {};
+    Object.defineProperty(locals, 'runtime', {
+      enumerable: false,
+      value: {
+        get env() {
+          throw new Error('Astro.locals.runtime.env has been removed in Astro v6. Use \'import { env } from "cloudflare:workers"\' instead.');
+        },
+      },
+    });
+
+    const mockContext: any = {
+      locals,
+      request: new Request('http://localhost:4321/admin'),
+    };
+
+    const env = getDbFromContext(mockContext);
+    expect(env).toBeDefined();
+    expect(typeof env.prepare).toBe('function');
+  });
 });

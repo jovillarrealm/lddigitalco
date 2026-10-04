@@ -1,6 +1,8 @@
 // LDDIGITALCO — Servicio de Sesión en Vivo (Taller Grupal de Acompañamiento)
 // Cumple con GLOSSARY.md y GUIA_DE_ESTILO.md (Control Escalonado y WCAG AAA)
 
+import { getWhatsAppContactUrl } from '../whatsapp';
+
 export type LiveSessionStatusType = 'upcoming' | 'active' | 'completed';
 
 export interface LiveSession {
@@ -281,8 +283,9 @@ export class SesionEnVivoManager {
           message:
             'Pase a la Inscripción Completa para desbloquear los talleres grupales en vivo con su tutor y recibir acompañamiento personalizado paso a paso.',
           actionText: 'Solicitar Inscripción Completa',
-          contactUrl:
-            'https://wa.me/573000000000?text=Hola,%20deseo%20dar%20el%20paso%20a%20la%20Inscripción%20Completa%20en%20LDDIGITALCO.',
+          contactUrl: getWhatsAppContactUrl(
+            'Hola, deseo dar el paso a la Inscripción Completa en LDDIGITALCO.'
+          ),
         }
       : null;
 
@@ -312,10 +315,18 @@ export class SesionEnVivoManager {
 }
 
 import { D1LiveSessionRepository, MemoryLiveSessionRepository } from './live-session-repository';
+import { getDbFromContext } from '../auth';
 
 export function getSesionEnVivoManagerFromContext(context: any): SesionEnVivoManager {
-  const db = (context.locals as any)?.runtime?.env?.DB || (context as any).db || (context as any).locals?.runtime?.env?.DB;
-  if (db) {
+  let db: any = (context as any)?.db;
+  if (!db && context) {
+    try {
+      db = getDbFromContext(context);
+    } catch {
+      // Fallback
+    }
+  }
+  if (db && typeof db.prepare === 'function') {
     return new SesionEnVivoManager(new D1LiveSessionRepository(db));
   }
   return new SesionEnVivoManager(new MemoryLiveSessionRepository(getConfiguredLiveSession()));

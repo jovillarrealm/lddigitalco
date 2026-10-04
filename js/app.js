@@ -50,8 +50,17 @@ function showToast(message) {
   }, 4500);
 }
 
-// WhatsApp Quick Launcher
-function openWhatsApp(customText = 'Hola LDDIGITALCO, quisiera solicitar información sobre sus servicios.') {
-  const encoded = encodeURIComponent(customText);
-  window.open(`https://wa.me/?text=${encoded}`, '_blank');
+// WhatsApp Configuration
+const WHATSAPP_NICKNAME = '@LucasDigital.coo';
+const DEFAULT_WHATSAPP_MESSAGE = 'quiero inquirir sobre los cursos.';
+
+function getWhatsAppUrl(message = DEFAULT_WHATSAPP_MESSAGE, nickname = WHATSAPP_NICKNAME) {
+  const cleanNickname = nickname && nickname.trim().startsWith('@') ? nickname.trim() : `@${(nickname || '').trim()}`;
+  return `https://wa.me/${cleanNickname}?text=${encodeURIComponent(message)}`;
 }
+
+// WhatsApp Quick Launcher
+function openWhatsApp(customText = DEFAULT_WHATSAPP_MESSAGE) {
+  window.open(getWhatsAppUrl(customText), '_blank');
+}
+

@@ -2,6 +2,7 @@ import { AccesoEstudiante } from './acceso-estudiante';
 import { getEmailService } from '../email';
 import { createInMemoryD1 } from '../db/d1-memory';
 import type { D1Database } from '../db/types';
+import { env as cfWorkersEnv } from 'cloudflare:workers';
 
 let devDb: D1Database | null = null;
 
@@ -81,8 +82,42 @@ export interface AuthContextInput {
   url?: URL;
 }
 
-export function getEnvFromContext(context: AuthContextInput): Record<string, any> {
-  return (context.locals as any)?.runtime?.env || (typeof process !== 'undefined' ? process.env : {});
+export function getEnvFromContext(context?: AuthContextInput): Record<string, any> {
+  let localsEnv: Record<string, any> | undefined;
+  if (context && context.locals) {
+    try {
+      localsEnv = (context.locals as any)?.runtime?.env;
+    } catch {
+      // In @astrojs/cloudflare runtime, Astro.locals.runtime.env throws in Astro v6+
+    }
+  }
+
+  const baseCf = typeof cfWorkersEnv !== 'undefined' ? cfWorkersEnv : {};
+  const baseProc = typeof process !== 'undefined' ? process.env : {};
+
+  return new Proxy({} as Record<string, any>, {
+    get(_target, prop: string | symbol) {
+      if (typeof prop !== 'string') return undefined;
+      if (localsEnv && prop in localsEnv && localsEnv[prop] !== undefined) {
+        return localsEnv[prop];
+      }
+      if (baseCf && prop in baseCf && baseCf[prop] !== undefined) {
+        return baseCf[prop];
+      }
+      if (baseProc && prop in baseProc && baseProc[prop] !== undefined) {
+        return baseProc[prop];
+      }
+      return (baseCf as any)?.[prop] ?? (localsEnv as any)?.[prop] ?? (baseProc as any)?.[prop];
+    },
+    has(_target, prop: string | symbol) {
+      if (typeof prop !== 'string') return false;
+      return (
+        Boolean(localsEnv && prop in localsEnv) ||
+        Boolean(baseCf && prop in baseCf) ||
+        Boolean(baseProc && prop in baseProc)
+      );
+    },
+  });
 }
 
 export function getDbFromContext(context: AuthContextInput): D1Database {

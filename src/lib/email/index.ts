@@ -41,7 +41,14 @@ export function getEmailService(env?: {
 }
 
 export function getNotificadorFormativo(envOrContext?: any): NotificadorFormativo {
-  const env = envOrContext?.locals?.runtime?.env ? envOrContext.locals.runtime.env : envOrContext;
+  let env = envOrContext;
+  if (envOrContext?.locals) {
+    try {
+      env = envOrContext.locals.runtime?.env || envOrContext;
+    } catch {
+      env = envOrContext;
+    }
+  }
   const transport = getEmailService(env);
   return new NotificadorFormativo(transport);
 }

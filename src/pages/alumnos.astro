@@ -5,6 +5,7 @@ import { getRouteBySlug, calculateRouteProgress } from '../lib/courses';
 import { getProgressByStudent } from '../lib/db/progreso';
 import { getStudentById } from '../lib/db/estudiantes';
 import { getUpcomingLiveSession } from '../lib/courses/live-session';
+import { getWhatsAppContactUrl } from '../lib/whatsapp';
 
 const authService = getAuthServiceFromContext(Astro);
 const sessionStudent = await authService.getSessionFromRequest(Astro.request);
@@ -84,7 +85,7 @@ if (sessionStudent) {
           </div>
         </div>
         <a
-          href="https://wa.me/573000000000?text=Hola,%20quisiera%20solicitar%20la%20Inscripción%20Completa%20para%20desbloquear%20todas%20las%20rutas."
+          href={getWhatsAppContactUrl('Hola, quisiera solicitar la Inscripción Completa para desbloquear todas las rutas.')}
           target="_blank"
           rel="noopener noreferrer"
           class="shrink-0 px-4 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs shadow-md transition-colors"
@@ -162,7 +163,7 @@ if (sessionStudent) {
               ¿Tiene dificultades para entrar o no recuerda su correo?
             </p>
             <a
-              href="https://wa.me/573000000000?text=Hola%20tutor%20de%20LDDIGITALCO,%20necesito%20ayuda%20para%20ingresar%20a%20mi%20Aula%20Digital."
+              href={getWhatsAppContactUrl('Hola tutor de LDDIGITALCO, necesito ayuda para ingresar a mi Aula Digital.')}
               target="_blank"
               rel="noopener noreferrer"
               class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 text-sm font-semibold transition-colors"
@@ -267,7 +268,7 @@ if (sessionStudent) {
             </div>
             {!isEnrolledFull && (
               <a
-                href="https://wa.me/573000000000?text=Hola,%20quisiera%20solicitar%20la%20Inscripción%20Completa%20para%20desbloquear%20todas%20las%20rutas."
+                href={getWhatsAppContactUrl('Hola, quisiera solicitar la Inscripción Completa para desbloquear todas las rutas.')}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="hidden sm:inline-flex items-center gap-1.5 min-h-[48px] px-4 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs shadow-md transition-colors"
@@ -367,7 +368,7 @@ if (sessionStudent) {
                   </a>
                 ) : (
                   <a
-                    href="https://wa.me/573000000000?text=Hola,%20quisiera%20solicitar%20la%20Inscripción%20Completa%20para%20desbloquear%20la%20Ruta%20de%20Banca%20Móvil%20Segura."
+                    href={getWhatsAppContactUrl('Hola, quisiera solicitar la Inscripción Completa para desbloquear la Ruta de Banca Móvil Segura.')}
                     target="_blank"
                     rel="noopener noreferrer"
                     class="min-h-[48px] px-5 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
@@ -568,7 +569,7 @@ if (sessionStudent) {
                 </p>
 
                 <a
-                  href="https://wa.me/573000000000?text=Hola,%20tengo%20Ruta%20Abierta%20y%20deseo%20dar%20el%20paso%20a%20la%20Inscripción%20Completa."
+                  href={getWhatsAppContactUrl('Hola, tengo Ruta Abierta y deseo dar el paso a la Inscripción Completa.')}
                   target="_blank"
                   rel="noopener noreferrer"
                   class="w-full min-h-[48px] py-3.5 px-4 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-black text-sm shadow-lg shadow-cyan-500/20 transition-transform transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer"
@@ -746,7 +747,7 @@ if (sessionStudent) {
               </button>
 
               <a
-                href="https://wa.me/573000000000?text=Hola,%20tengo%20Ruta%20Abierta%20y%20deseo%20solicitar%20la%20Inscripción%20Completa%20para%20enviar%20consultas%20a%20mi%20tutor."
+                href={getWhatsAppContactUrl('Hola, tengo Ruta Abierta y deseo solicitar la Inscripción Completa para enviar consultas a mi tutor.')}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="w-full sm:w-auto min-h-[48px] min-w-[48px] px-6 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm sm:text-base shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer transition-transform transform hover:scale-[1.01]"

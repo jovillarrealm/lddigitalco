@@ -81,7 +81,7 @@ const isSeniorTheme = theme === 'senior';
         </div>
 
         <div class="flex items-center gap-3">
-          <button onclick="openBookingModal('Diagnóstico Estratégico')" class="px-5 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs shadow-md shadow-cyan-500/20 transition-all transform hover:-translate-y-0.5 flex items-center gap-1.5">
+          <button onclick="openWhatsApp('quiero inquirir sobre los cursos.')" class="px-5 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs shadow-md shadow-cyan-500/20 transition-all transform hover:-translate-y-0.5 flex items-center gap-1.5 cursor-pointer">
             <span>Agendar Asesoría</span>
             <span class="text-sm">→</span>
           </button>
@@ -101,7 +101,7 @@ const isSeniorTheme = theme === 'senior';
       <h3 id="modal-service-name" class="text-xl font-bold font-tech text-white mt-1 mb-2">Asesoría Corporativa</h3>
       <p class="text-slate-300 text-xs mb-6">Seleccione su información para agendar su sesión de diagnóstico estratégico de 30 minutos.</p>
 
-      <form onsubmit="handleBookingSubmit(event)" class="space-y-3 mb-6">
+      <form onsubmit="handleBookingSubmit(event)" class="space-y-3 mb-4">
         <div>
           <label class="text-xs text-slate-300 block mb-1">Nombre o Empresa</label>
           <input id="booking-name" required type="text" placeholder="Ej. Juan Pérez / Tech Soluciones" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white focus:border-cyan-400 focus:outline-none" />
@@ -119,6 +119,13 @@ const isSeniorTheme = theme === 'senior';
           <button type="submit" class="w-1/2 py-2.5 rounded-xl bg-cyan-400 text-slate-950 font-bold text-xs shadow-md shadow-cyan-500/20 min-h-[48px]">Confirmar Cita</button>
         </div>
       </form>
+
+      <div class="pt-3 border-t border-slate-800 text-center">
+        <button type="button" onclick="closeBookingModal(); openWhatsApp('quiero inquirir sobre los cursos.');" class="w-full py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition-colors flex items-center justify-center gap-2 min-h-[48px] cursor-pointer">
+          <span>💬</span>
+          <span>O agendar directamente por WhatsApp</span>
+        </button>
+      </div>
     </div>
   </div>
 
