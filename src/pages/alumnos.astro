@@ -179,6 +179,38 @@ if (student) {
           </div>
         </div>
 
+        <!-- Banner Empático de Conexión y Resiliencia Offline (ADR 0009 / WCAG AAA Senior) -->
+        <div
+          id="offline-status-banner"
+          role="status"
+          aria-live="polite"
+          class="hidden mb-6 p-5 rounded-2xl border-2 transition-all duration-300"
+        >
+          <div class="flex items-start sm:items-center justify-between gap-4">
+            <div class="flex items-start sm:items-center gap-4">
+              <div id="offline-banner-icon" class="text-3xl shrink-0 p-2.5 rounded-xl bg-slate-900/60 border border-slate-700/50">
+                💾
+              </div>
+              <div>
+                <h4 id="offline-banner-title" class="font-bold text-base sm:text-lg mb-1 font-tech text-amber-300">
+                  Tu avance está protegido en este dispositivo
+                </h4>
+                <p id="offline-banner-message" class="text-sm sm:text-base leading-relaxed text-slate-100">
+                  Sin conexión a internet por el momento. ¡No te preocupes! Tu avance está a salvo en tu dispositivo y se guardará automáticamente cuando regrese la conexión.
+                </p>
+              </div>
+            </div>
+            <button
+              id="offline-banner-close"
+              type="button"
+              class="text-slate-400 hover:text-white p-2 rounded-lg text-lg transition-colors cursor-pointer shrink-0"
+              aria-label="Cerrar aviso informativo"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
         <div class="grid lg:grid-cols-3 gap-8">
           
           <div class="lg:col-span-2 space-y-6">
@@ -388,5 +420,6 @@ if (student) {
     }
   </script>
 
+  <script is:inline src="/js/offline-sync.js"></script>
   <script is:inline src="/js/lms-player.js"></script>
 </BaseLayout>

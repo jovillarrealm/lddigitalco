@@ -301,7 +301,7 @@
   }
 
   /**
-   * Envía el estado de progreso a la API de D1
+   * Envía el estado de progreso a la API de D1 a través del gestor de resiliencia offline
    */
   async function saveProgress(microcapsulaSlug, completado) {
     state.isSaving = true;
@@ -317,29 +317,44 @@
     renderCurriculum();
 
     try {
-      const res = await fetch('/api/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      if (window.offlineSyncManager && typeof window.offlineSyncManager.saveProgress === 'function') {
+        const syncResult = await window.offlineSyncManager.saveProgress({
           microcapsulaSlug,
           completado,
-          rutaSlug: state.route.slug,
-        }),
-      });
+          rutaSlug: state.route ? state.route.slug : undefined,
+        });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.progreso && Array.isArray(data.progreso.completadasSlugs)) {
-          state.completedSlugs = new Set(data.progreso.completadasSlugs);
+        if (syncResult && syncResult.data && syncResult.data.progreso && Array.isArray(syncResult.data.progreso.completadasSlugs)) {
+          state.completedSlugs = new Set(syncResult.data.progreso.completadasSlugs);
           updateProgressUI();
           renderCurriculum();
           renderCurrentCapsule();
         }
       } else {
-        console.warn('No se pudo guardar el progreso en el servidor. Código:', res.status);
+        const res = await fetch('/api/progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            microcapsulaSlug,
+            completado,
+            rutaSlug: state.route ? state.route.slug : undefined,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.progreso && Array.isArray(data.progreso.completadasSlugs)) {
+            state.completedSlugs = new Set(data.progreso.completadasSlugs);
+            updateProgressUI();
+            renderCurriculum();
+            renderCurrentCapsule();
+          }
+        } else {
+          console.warn('No se pudo guardar el progreso en el servidor. Código:', res.status);
+        }
       }
     } catch (err) {
-      console.error('Error de red al guardar progreso:', err);
+      console.warn('Error al guardar progreso:', err);
     } finally {
       state.isSaving = false;
     }
@@ -492,6 +507,18 @@
 
     const toggleBtn = document.getElementById('toggle-complete-btn');
     if (toggleBtn) toggleBtn.addEventListener('click', toggleComplete);
+
+    // Escuchar sincronización exitosa en segundo plano
+    window.addEventListener('lms:sync-completed', function (e) {
+      if (e.detail && Array.isArray(e.detail.slugs)) {
+        e.detail.slugs.forEach(function (slug) {
+          state.completedSlugs.add(slug);
+        });
+        updateProgressUI();
+        renderCurriculum();
+        renderCurrentCapsule();
+      }
+    });
   }
 
   // Exponer API pública en window para interacción
