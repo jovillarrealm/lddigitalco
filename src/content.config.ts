@@ -1,7 +1,9 @@
 // LDDIGITALCO — Definición y Validación de Colecciones de Contenido (ADR 0002 & ADR 0007)
-// Integración de EmDash CMS y Astro Content Collections con Zod
+// Integración de EmDash CMS y Astro Content Layer con Zod
 
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
+import { z } from 'astro/zod';
+import { glob } from 'astro/loaders';
 
 export const microcapsulaSchema = z.object({
   id: z.string(),
@@ -15,7 +17,7 @@ export const microcapsulaSchema = z.object({
 });
 
 export const rutasCollection = defineCollection({
-  type: 'content',
+  loader: glob({ pattern: '**/*.md', base: './src/content/rutas' }),
   schema: z.object({
     id: z.string(),
     titulo: z.string(),

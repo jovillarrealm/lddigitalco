@@ -80,3 +80,46 @@ export async function getConsultaById(
 
   return record ?? null;
 }
+
+export interface ConsultaConEstudiante extends Consulta {
+  estudiante_nombre?: string;
+  estudiante_email?: string;
+}
+
+/**
+ * Obtiene todas las consultas registradas en el sistema para el panel de administración.
+ */
+export async function getAllConsultas(
+  db: D1Database,
+  limit = 100
+): Promise<ConsultaConEstudiante[]> {
+  const result = await db
+    .prepare(`
+      SELECT c.id, c.estudiante_id, c.microcapsula_slug, c.mensaje, c.estado, c.creado_en,
+             e.nombre as estudiante_nombre, e.email as estudiante_email
+      FROM consultas c
+      LEFT JOIN estudiantes e ON c.estudiante_id = e.id
+      ORDER BY c.creado_en DESC
+      LIMIT ?
+    `)
+    .bind(limit)
+    .all<ConsultaConEstudiante>();
+
+  return result.results || [];
+}
+
+/**
+ * Actualiza el estado formativo de una consulta (pendiente / respondida).
+ */
+export async function updateConsultaEstado(
+  db: D1Database,
+  id: string,
+  estado: 'pendiente' | 'respondida'
+): Promise<boolean> {
+  await db
+    .prepare(`UPDATE consultas SET estado = ? WHERE id = ?`)
+    .bind(estado, id)
+    .run();
+  return true;
+}
+

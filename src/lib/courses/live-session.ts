@@ -169,6 +169,20 @@ export function getLiveSessionStatus(
   };
 }
 
+let currentConfiguredSession: LiveSession = { ...DEFAULT_LIVE_SESSION };
+
+export function updateConfiguredLiveSession(updates: Partial<LiveSession>): LiveSession {
+  currentConfiguredSession = {
+    ...currentConfiguredSession,
+    ...updates,
+  };
+  return currentConfiguredSession;
+}
+
+export function getConfiguredLiveSession(): LiveSession {
+  return { ...currentConfiguredSession };
+}
+
 /**
  * Retorna la información de la sesión en vivo configurada o por defecto
  */
@@ -177,8 +191,9 @@ export function getUpcomingLiveSession(
   customSession?: Partial<LiveSession>
 ): LiveSessionInfo {
   const session: LiveSession = {
-    ...DEFAULT_LIVE_SESSION,
+    ...currentConfiguredSession,
     ...customSession,
   };
   return getLiveSessionStatus(session, referenceTime);
 }
+

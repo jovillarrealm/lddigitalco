@@ -5,10 +5,14 @@ node_modules/
 # Build outputs
 dist/
 .astro/
+.wrangler/
+
 
 # Environment files
 .env
 .env.*
+!.env.example
+
 
 # Scratch and OS files
 .scratch/

@@ -891,6 +891,10 @@ if (sessionStudent) {
   </script>
 
 
-  <script is:inline src="/js/offline-sync.js"></script>
+  <script>
+    import { initBrowserOfflineSync } from '../lib/offline/sync-manager';
+    initBrowserOfflineSync();
+  </script>
   <script is:inline src="/js/lms-player.js"></script>
 </BaseLayout>
+
