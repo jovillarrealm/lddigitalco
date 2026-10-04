@@ -11,9 +11,14 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^12.2.0",
-    "@astrojs/check": "^0.9.4",
-    "astro": "^5.4.2",
+    "@astrojs/check": "^0.9.10",
+    "@astrojs/cloudflare": "^14.3.3",
+    "@astrojs/react": "^7.0.0",
+    "@emdash-cms/cloudflare": "^1.1.0",
+    "astro": "^7.3.5",
+    "emdash": "^1.1.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
     "resend": "^4.1.2",
     "zod": "^3.24.2"
   },
