@@ -1,0 +1,3 @@
+# Migración Integral del Ecosistema Web a Proyecto Astro
+
+Para alojar el nuevo LMS con EmDash CMS en Cloudflare Pages manteniendo las páginas corporativas y de servicios existentes (`index.html`, `b2b.html`, `senior.html`), decidimos migrar el repositorio completo a un proyecto unificado de Astro en lugar de aislar el LMS en un subdirectorio o subdominio separado. Esto permite compartir el sistema de diseño (`GUIA_DE_ESTILO.md`) entre la web pública y el portal del estudiante, unifica el pipeline de despliegue en un único proyecto de Cloudflare Pages y facilita que endpoints del backend en el Edge (Workers) gestionen tanto el LMS como futuros formularios corporativos.

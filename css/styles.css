@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700;800&display=swap');
+
+:root {
+  --bg-dark: #070b13;
+  --bg-card: rgba(15, 23, 42, 0.75);
+  --neon-blue: #00d2ff;
+  --neon-green: #00ff87;
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  scroll-behavior: smooth;
+}
+
+.font-tech {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+/* Glowing Neon Utilities */
+.glow-blue {
+  box-shadow: 0 0 35px -5px rgba(0, 210, 255, 0.3);
+}
+
+.glow-green {
+  box-shadow: 0 0 35px -5px rgba(0, 255, 135, 0.3);
+}
+
+.glow-border-blue {
+  border-color: rgba(0, 210, 255, 0.5);
+  box-shadow: inset 0 0 15px rgba(0, 210, 255, 0.1), 0 0 20px rgba(0, 210, 255, 0.2);
+}
+
+.glow-border-green {
+  border-color: rgba(0, 255, 135, 0.5);
+  box-shadow: inset 0 0 15px rgba(0, 255, 135, 0.1), 0 0 20px rgba(0, 255, 135, 0.2);
+}
+
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #070b13;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}

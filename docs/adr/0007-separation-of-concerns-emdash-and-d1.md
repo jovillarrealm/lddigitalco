@@ -1,0 +1,3 @@
+# Separación de Responsabilidades entre EmDash CMS y Cloudflare D1
+
+Un LMS combina contenido editorial (títulos, videos, descripciones de rutas y microcápsulas) con estado transaccional del usuario (registros, avance, consultas). Decidimos alojar la estructura de cursos y metadatos exclusivamente en EmDash CMS (mediante sus esquemas y colecciones de Astro), reservando la base de datos Cloudflare D1 únicamente para el estado dinámico del estudiante (`estudiantes`, `progreso`, `consultas`). Esta división evita redundancias, elimina la necesidad de sincronizar esquemas relacionales con el CMS y minimiza las operaciones de escritura en D1, garantizando un rendimiento óptimo dentro de la capa gratuita de Cloudflare.

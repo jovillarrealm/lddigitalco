@@ -1,0 +1,3 @@
+# Resiliencia de Red y Sincronización Asíncrona Empática
+
+Las desconexiones intermitentes de red son comunes en dispositivos móviles y redes domésticas, y en adultos mayores los avisos de error técnicos generan temor a haber "dañado el sistema" o "perdido todo el avance". Decidimos capturar el progreso formativo localmente de forma temporal ante caídas de conexión y sincronizarlo en segundo plano hacia Cloudflare D1 en cuanto se restaura el enlace (`navigator.onLine`). Si se requiere informar al estudiante, se muestra un mensaje comprensivo y tranquilizador en lugar de alertas de error bloqueantes o recargas forzadas de página.

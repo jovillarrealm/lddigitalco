@@ -1,0 +1,3 @@
+# Plataforma Core con Módulos Especializados para B2B y Programa +50
+
+LDDIGITALCO atiende a dos audiencias con propuestas de valor, lenguaje y ciclos de vida radicalmente distintos: clientes corporativos B2B y estudiantes del Programa +50. Decidimos estructurar el dominio como un núcleo compartido de infraestructura (autenticación básica, pasarela de pagos y notificaciones) con módulos de dominio estrictamente desacoplados para el LMS (+50) y la consultoría estratégica B2B. Esto evita forzar al estudiante adulto mayor a interactuar con modelos de datos empresariales o lidiar con fricciones de cuentas corporativas, al tiempo que previene duplicar la infraestructura técnica base.

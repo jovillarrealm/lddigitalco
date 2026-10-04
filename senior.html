@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Programa +50 — Inclusión Digital & Ciberseguridad | LDDIGITALCO</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="min-h-screen antialiased flex flex-col bg-[#060e0b] text-slate-100 text-lg">
+
+  <!-- Senior Navbar -->
+  <nav class="sticky top-0 z-50 bg-[#081510]/95 border-b border-emerald-900/60 backdrop-blur-md px-6 py-5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <a href="index.html" class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-400 to-green-500 flex items-center justify-center text-black font-black text-2xl shadow-lg shadow-emerald-500/30">
+          +50
+        </div>
+        <div>
+          <span class="text-2xl font-bold font-tech tracking-wider text-white">LDDIGITAL<span class="text-emerald-400">CO</span></span>
+          <span class="block text-xs text-emerald-400 font-semibold tracking-wider uppercase">Programa +50 Senior</span>
+        </div>
+      </a>
+
+      <!-- Quick Nav -->
+      <div class="hidden md:flex items-center gap-8 text-base font-semibold text-slate-200">
+        <a href="index.html" class="hover:text-emerald-400 transition-colors">← Inicio</a>
+        <a href="#modulos" class="hover:text-emerald-400 transition-colors">¿Qué Aprenderé?</a>
+        <a href="#como-funciona" class="hover:text-emerald-400 transition-colors">¿Cómo Funciona?</a>
+        <a href="alumnos.html" class="text-emerald-400 font-bold hover:underline">Ver Portal de Alumnos ▶</a>
+      </div>
+
+      <!-- WhatsApp Help Button -->
+      <button onclick="openWhatsApp('Hola, quisiera información sobre el Programa +50 para adultos mayores.')" class="px-6 py-3.5 rounded-2xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-sm shadow-lg shadow-emerald-500/25 flex items-center gap-2">
+        <span class="text-lg">💬</span>
+        <span>Hablar por WhatsApp</span>
+      </button>
+
+    </div>
+  </nav>
+
+  <!-- Senior Hero -->
+  <header class="py-16 px-4 max-w-4xl mx-auto text-center">
+    
+    <div class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-emerald-950 border border-emerald-500/50 text-emerald-300 text-sm font-bold mb-6">
+      <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
+      Aprenda a su ritmo • Sin prisas • Con profesores pacientes
+    </div>
+
+    <h1 class="text-4xl sm:text-6xl font-extrabold font-tech text-white mb-6 leading-tight">
+      Tecnología y Ciberseguridad <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-300">fácil y sin miedo</span>
+    </h1>
+
+    <p class="text-slate-200 text-xl leading-relaxed mb-8 max-w-2xl mx-auto">
+      Domine el uso de su celular, computador, protéjase de estafas en internet y descubra la Inteligencia Artificial explicada con ejemplos de la vida diaria.
+    </p>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
+      <button onclick="openBookingModal('Inscripción Programa +50')" class="w-full sm:w-auto px-9 py-5 rounded-2xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-lg shadow-xl shadow-emerald-500/30 transition-transform transform hover:scale-105 flex items-center justify-center gap-2">
+        <span>Inscribirme al Programa</span>
+        <span>→</span>
+      </button>
+
+      <button onclick="openWhatsApp('Hola, me gustaría saber si este curso es para mí o para mi familiar.')" class="w-full sm:w-auto px-8 py-5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-emerald-300 font-bold text-base border-2 border-emerald-500/40 transition-colors flex items-center justify-center gap-2">
+        <span>Preguntar dudas por WhatsApp</span>
+        <span>📞</span>
+      </button>
+    </div>
+
+    <!-- Audience switch badge -->
+    <div class="inline-block p-4 rounded-2xl bg-slate-900/90 border border-emerald-900/80 text-sm text-slate-300">
+      💡 <strong>¿Eres hijo, nieto o familiar?</strong> Puedes inscribir a tus padres o abuelos y nosotros nos encargamos de guiarlos con paciencia y cariño.
+    </div>
+
+  </header>
+
+  <!-- 3 Pillars of Programa +50 -->
+  <main id="modulos" class="max-w-6xl mx-auto px-4 pb-20 space-y-12">
+    
+    <div class="text-center max-w-2xl mx-auto">
+      <span class="text-emerald-400 font-bold text-sm uppercase tracking-wider block mb-1">Contenido del Curso</span>
+      <h2 class="text-3xl sm:text-4xl font-extrabold font-tech text-white">Los 3 Módulos Principales</h2>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-8">
+      
+      <!-- Module 1 -->
+      <div class="glass-card rounded-3xl p-8 border-2 border-emerald-500/40 bg-gradient-to-b from-[#091e16] to-[#07140f] flex flex-col justify-between shadow-xl">
+        <div>
+          <div class="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-400 flex items-center justify-center text-3xl mb-6">
+            🛡️
+          </div>
+          <span class="text-xs font-bold text-emerald-400 uppercase tracking-widest block mb-1">Módulo 01</span>
+          <h3 class="text-2xl font-bold font-tech text-white mb-3">Ciberseguridad & Anti-Estafas</h3>
+          <p class="text-slate-200 text-base leading-relaxed mb-6">
+            Aprenda a reconocer mensajes falsos de bancos, llamadas engañosas y enlaces sospechosos para que nunca nadie se aproveche de su confianza.
+          </p>
+          <ul class="space-y-3 text-base text-slate-200 mb-8 border-t border-emerald-900/60 pt-4 font-medium">
+            <li class="flex items-center gap-2"><span class="text-emerald-400 font-black text-lg">✓</span> Claves seguras y cómo recordarlas</li>
+            <li class="flex items-center gap-2"><span class="text-emerald-400 font-black text-lg">✓</span> Qué hacer ante un mensaje dudoso</li>
+            <li class="flex items-center gap-2"><span class="text-emerald-400 font-black text-lg">✓</span> Operaciones bancarias 100% protegidas</li>
+          </ul>
+        </div>
+        <button onclick="openBookingModal('Programa +50 - Ciberseguridad')" class="w-full py-4 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-sm shadow-md shadow-emerald-500/20">
+          Inscribirme a este módulo →
+        </button>
+      </div>
+
+      <!-- Module 2 -->
+      <div class="glass-card rounded-3xl p-8 border-2 border-emerald-400 glow-green bg-gradient-to-b from-[#0c281e] to-[#071710] flex flex-col justify-between shadow-2xl relative">
+        <div class="absolute -top-3 right-6 px-3 py-1 rounded-full bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow">
+          El Más Querido
+        </div>
+        <div>
+          <div class="w-16 h-16 rounded-2xl bg-emerald-400 text-slate-950 flex items-center justify-center text-3xl mb-6 font-bold">
+            📱
+          </div>
+          <span class="text-xs font-bold text-emerald-300 uppercase tracking-widest block mb-1">Módulo 02</span>
+          <h3 class="text-2xl font-bold font-tech text-white mb-3">Celular y Computador Fácil</h3>
+          <p class="text-slate-100 text-base leading-relaxed mb-6">
+            Comuníquese con sus hijos y nietos sin depender de terceros. Envíe audios, fotos, haga videollamadas nítidas y haga trámites desde casa.
+          </p>
+          <ul class="space-y-3 text-base text-slate-100 mb-8 border-t border-emerald-800 pt-4 font-medium">
+            <li class="flex items-center gap-2"><span class="text-emerald-400 font-black text-lg">✓</span> Manejo total de WhatsApp</li>
+            <li class="flex items-center gap-2"><span class="text-emerald-400 font-black text-lg">✓</span> Letras grandes y pantalla cómoda</li>
+            <li class="flex items-center gap-2"><span class="text-emerald-400 font-black text-lg">✓</span> Videollamadas en Zoom y Meet</li>
+          </ul>
+        </div>
+        <button onclick="openBookingModal('Programa +50 - Celulares')" class="w-full py-4 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/30">
+          Inscribirme a este módulo →
+        </button>
+      </div>
+
+      <!-- Module 3 -->
+      <div class="glass-card rounded-3xl p-8 border-2 border-emerald-500/40 bg-gradient-to-b from-[#091e16] to-[#07140f] flex flex-col justify-between shadow-xl">
+        <div>
+          <div class="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-400 flex items-center justify-center text-3xl mb-6">
+            🤖
+          </div>
+          <span class="text-xs font-bold text-emerald-400 uppercase tracking-widest block mb-1">Módulo 03</span>
+          <h3 class="text-2xl font-bold font-tech text-white mb-3">Inteligencia Artificial Práctica</h3>
+          <p class="text-slate-200 text-base leading-relaxed mb-6">
+            Hable con la IA como si fuera un asistente personal. Pídale ideas de cocina, ayuda para redactar cartas, recordatorios de medicinas o historias interesantes.
+          </p>
+          <ul class="space-y-3 text-base text-slate-200 mb-8 border-t border-emerald-900/60 pt-4 font-medium">
+            <li class="flex items-center gap-2"><span class="text-emerald-400 font-black text-lg">✓</span> Asistentes de voz en el celular</li>
+            <li class="flex items-center gap-2"><span class="text-emerald-400 font-black text-lg">✓</span> Respuestas claras a dudas de salud</li>
+            <li class="flex items-center gap-2"><span class="text-emerald-400 font-black text-lg">✓</span> Ejercicios de memoria y agilidad</li>
+          </ul>
+        </div>
+        <button onclick="openBookingModal('Programa +50 - IA')" class="w-full py-4 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-sm shadow-md shadow-emerald-500/20">
+          Inscribirme a este módulo →
+        </button>
+      </div>
+
+    </div>
+
+    <!-- How It Works Section -->
+    <section id="como-funciona" class="glass-card rounded-3xl p-10 border border-emerald-900 bg-slate-950/90 mt-16">
+      <h3 class="text-2xl sm:text-3xl font-bold font-tech text-white mb-6 text-center">¿Cómo es la Metodología Híbrida del Programa +50?</h3>
+      <div class="grid md:grid-cols-2 gap-8 text-base">
+        <div class="p-6 rounded-2xl bg-[#091a13] border border-emerald-500/30">
+          <div class="text-3xl mb-3">📺</div>
+          <h4 class="text-xl font-bold text-emerald-300 mb-2">1. Cápsulas en Video de 2 Minutos</h4>
+          <p class="text-slate-300 text-sm leading-relaxed">
+            Nada de videos largos ni complicados. Son lecciones cortitas y prácticas con flechas grandes en pantalla para que practique en su propio celular a cualquier hora.
+          </p>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-[#091a13] border border-emerald-500/30">
+          <div class="text-3xl mb-3">👥</div>
+          <h4 class="text-xl font-bold text-emerald-300 mb-2">2. Clases Grupales en Vivo por Semana</h4>
+          <p class="text-slate-300 text-sm leading-relaxed">
+            Nos reunimos todos los miércoles por videollamada para repasar juntos, hacer preguntas y resolver en directo cualquier problema que tenga en su teléfono o computador.
+          </p>
+        </div>
+      </div>
+      <div class="mt-8 text-center">
+        <a href="alumnos.html" class="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-base shadow-lg shadow-emerald-500/20">
+          <span>Ver cómo es la pantalla del alumno</span> ▶
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal Booking -->
+  <div id="booking-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-emerald-500/50 shadow-2xl relative text-left">
+      <button onclick="closeBookingModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">✕</button>
+      <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider font-tech">Inscripción Programa +50</span>
+      <h3 id="modal-service-name" class="text-xl font-bold font-tech text-white mt-1 mb-2">Programa +50</h3>
+      <p class="text-slate-300 text-xs mb-6">Deje sus datos o los de su familiar para contactarle y darle la bienvenida al curso.</p>
+      <form onsubmit="handleBookingSubmit(event)" class="space-y-3 mb-6">
+        <div>
+          <label class="text-xs text-slate-300 block mb-1">Nombre del Alumno o Familiar</label>
+          <input id="booking-name" required type="text" placeholder="Ej. María Gómez" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white focus:border-emerald-400 focus:outline-none">
+        </div>
+        <div>
+          <label class="text-xs text-slate-300 block mb-1">Teléfono o WhatsApp de Contacto</label>
+          <input id="booking-email" required type="text" placeholder="Ej. +54 9 11 1234-5678" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white focus:border-emerald-400 focus:outline-none">
+        </div>
+        <div>
+          <label class="text-xs text-slate-300 block mb-1">Fecha preferida para empezar</label>
+          <input id="booking-date" required type="date" value="2026-10-15" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white focus:border-emerald-400 focus:outline-none">
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="closeBookingModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700">Cancelar</button>
+          <button type="submit" class="w-1/2 py-2.5 rounded-xl bg-emerald-400 text-slate-950 font-bold text-xs shadow-md shadow-emerald-500/20">Solicitar Lugar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="bg-[#040a08] border-t border-emerald-950 py-8 px-4 mt-auto text-sm text-slate-400">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+      <span class="font-bold text-white font-tech">LDDIGITALCO • Programa +50 Senior</span>
+      <a href="index.html" class="text-cyan-400 hover:underline">Volver a la portada general de LDDIGITALCO →</a>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

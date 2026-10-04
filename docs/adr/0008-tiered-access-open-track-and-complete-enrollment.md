@@ -1,0 +1,3 @@
+# Modelo de Acceso Escalonado: Ruta Abierta e Inscripción Completa
+
+Para reducir la desconfianza inicial en el público adulto mayor y sus familias sin saturar la atención de los tutores, decidimos implementar un acceso en dos niveles: una «Ruta Abierta» gratuita con auto-registro inmediato mediante correo electrónico que sirve como puerta de entrada sin fricciones, y la «Inscripción Completa» que desbloquea la totalidad de rutas temáticas, el envío de consultas formativas («Tengo una Duda») y el ingreso a las sesiones en vivo por Zoom/Meet. Esto maximiza la adquisición de estudiantes a la vez que reserva la capacidad de soporte para los alumnos matriculados.

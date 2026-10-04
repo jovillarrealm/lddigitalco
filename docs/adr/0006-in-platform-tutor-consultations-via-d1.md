@@ -1,0 +1,3 @@
+# Canal de Consultas Formativas Interno en D1 con Notificación al Tutor
+
+En lugar de delegar las consultas de los estudiantes a números personales de WhatsApp externo, decidimos canalizar el botón «Tengo una Duda» a través de un formulario modal integrado en la plataforma. Las consultas se registran de forma centralizada en la base de datos Cloudflare D1 junto con el identificador de la microcápsula y del estudiante, disparando una notificación por correo electrónico al equipo de tutores. Esto mantiene el historial pedagógico auditable y protegido dentro del sistema, permitiendo al tutor responder con contexto completo.
