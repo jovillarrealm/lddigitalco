@@ -12,5 +12,6 @@ dist/
 
 # Scratch and OS files
 .scratch/
+.worktrees/
 .DS_Store
 Thumbs.db
