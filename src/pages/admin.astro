@@ -5,7 +5,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { getAuthServiceFromContext, getDbFromContext, getEnvFromContext } from '../lib/auth';
 import { getAllStudents } from '../lib/db/estudiantes';
 import { getAllConsultas } from '../lib/db/consultas';
-import { getConfiguredLiveSession, getUpcomingLiveSession } from '../lib/courses/live-session';
+import { getSesionEnVivoManagerFromContext } from '../lib/courses/live-session';
 import { getAllRoutes } from '../lib/courses';
 
 export const prerender = false;
@@ -22,8 +22,9 @@ const isAdminAuthorized = (session && session.rol === 'admin') || adminCookie ==
 const db = getDbFromContext(Astro);
 let students: any[] = [];
 let consultas: any[] = [];
-let liveConfig = getConfiguredLiveSession();
-let liveStatus = getUpcomingLiveSession();
+const liveManager = getSesionEnVivoManagerFromContext(Astro);
+let liveConfig = await liveManager.getConfiguredSession();
+let liveStatus = await liveManager.getSessionStatus();
 let routes = getAllRoutes();
 
 if (isAdminAuthorized) {
