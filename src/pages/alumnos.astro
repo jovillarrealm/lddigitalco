@@ -1,120 +1,322 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getAuthServiceFromContext } from '../lib/auth';
+
+const authService = getAuthServiceFromContext(Astro);
+const student = await authService.getSessionFromRequest(Astro.request);
+
+const loginSuccess = Astro.url.searchParams.get('login') === 'success';
+const authError = Astro.url.searchParams.get('error');
 ---
 
 <BaseLayout title="Portal de Alumnos — LDDIGITALCO" activeNav="alumnos">
   <!-- LMS Main Area -->
   <main class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex-1">
     
-    <!-- User Welcome & Stats Card -->
-    <div class="glass-card rounded-2xl p-6 border border-slate-800 mb-8 flex flex-wrap items-center justify-between gap-6">
-      <div>
-        <span class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-cyan-950 text-cyan-400 border border-cyan-500/30">Alumno Activo</span>
-        <h1 class="text-2xl font-bold font-tech text-white mt-1">Bienvenido a su Aula Digital</h1>
-        <p class="text-xs text-slate-400 mt-0.5">Ruta actual: <span class="text-emerald-400 font-semibold">Ciberseguridad y Prevención de Estafas en WhatsApp</span></p>
-      </div>
-
-      <div class="w-full sm:w-72">
-        <div class="flex justify-between text-xs font-semibold mb-1.5">
-          <span class="text-slate-400">Progreso de la Ruta</span>
-          <span id="progress-text" class="text-emerald-400 font-bold">50% Completado</span>
-        </div>
-        <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700">
-          <div id="progress-bar" class="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 rounded-full transition-all duration-500" style="width: 50%;"></div>
+    {loginSuccess && (
+      <div role="alert" class="mb-6 p-4 rounded-2xl bg-emerald-950/80 border-2 border-emerald-400 text-white flex items-center gap-3">
+        <span class="text-2xl">🎉</span>
+        <div>
+          <h3 class="font-bold text-emerald-300">¡Acceso concedido!</h3>
+          <p class="text-sm text-slate-200">Su sesión está activa. Bienvenido a su Aula Digital.</p>
         </div>
       </div>
-    </div>
+    )}
 
-    <!-- Main Player & Curriculum Grid -->
-    <div class="grid lg:grid-cols-3 gap-8">
-      
-      <!-- Video Capsule Player (Cols 1-2) -->
-      <div class="lg:col-span-2 space-y-6">
-        
-        <div class="glass-card rounded-3xl overflow-hidden border border-slate-700/80 shadow-2xl">
+    {authError && (
+      <div role="alert" class="mb-6 p-4 rounded-2xl bg-amber-950/80 border-2 border-amber-400 text-white flex items-center gap-3">
+        <span class="text-2xl">⚠️</span>
+        <div>
+          <h3 class="font-bold text-amber-300">Enlace no válido o expirado</h3>
+          <p class="text-sm text-slate-200">El enlace de acceso ya no es válido o pasaron más de 15 minutos. Ingrese su correo abajo para recibir uno nuevo.</p>
+        </div>
+      </div>
+    )}
+
+    {!student && (
+      <section aria-labelledby="login-heading" class="max-w-2xl mx-auto my-8">
+        <div class="glass-card rounded-3xl p-8 sm:p-12 border-2 border-slate-700 shadow-2xl relative overflow-hidden">
           
-          <!-- Screen Mockup -->
-          <div class="relative bg-slate-950 aspect-video flex flex-col items-center justify-center p-6 text-center border-b border-slate-800 bg-gradient-to-b from-slate-900 via-slate-950 to-black">
-            <div onclick="nextLesson()" class="w-20 h-20 rounded-full bg-cyan-500/20 border-2 border-cyan-400 flex items-center justify-center text-cyan-400 text-3xl cursor-pointer hover:scale-110 transition-transform shadow-lg shadow-cyan-500/30">
-              ▶
-            </div>
-            <h2 id="lesson-title" class="text-lg sm:text-xl font-bold text-white mt-4 font-tech max-w-xl">
-              Cápsula #3: Cómo identificar un mensaje o enlace de estafa en WhatsApp
-            </h2>
-            <p id="lesson-duration" class="text-xs text-slate-400 mt-1">Duración: 02:45 • Explicado paso a paso</p>
-
-            <!-- Video Progress Simulation -->
-            <div class="absolute bottom-4 left-6 right-6 flex items-center justify-between text-xs text-slate-400 font-mono">
-              <span>01:15 / 02:45</span>
-              <div class="flex-1 mx-4 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                <div class="h-full bg-cyan-400 w-1/2"></div>
-              </div>
-              <span>🔊 100%</span>
-            </div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-xs font-bold uppercase tracking-wider mb-6">
+            <span>🛡️</span> Acceso sin Contraseña
           </div>
 
-          <!-- Large Navigation Buttons (Tailored for Seniors) -->
-          <div class="p-6 bg-slate-900/90 flex flex-wrap items-center justify-between gap-4">
-            <button onclick="prevLesson()" class="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs sm:text-sm border border-slate-700 flex items-center gap-2">
-              ← Lección Anterior
-            </button>
+          <h1 id="login-heading" class="text-2xl sm:text-3xl font-bold font-tech text-white mb-4 leading-tight">
+            Bienvenido a su Aula Digital
+          </h1>
 
-            <div class="flex items-center gap-3">
-              <button onclick="openWhatsApp('Hola tutor de LDDIGITALCO, estoy en la cápsula de WhatsApp y tengo una duda.')" class="px-5 py-3 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 font-semibold text-xs sm:text-sm flex items-center gap-1.5">
-                <span>❓</span> Tengo una Duda
-              </button>
-
-              <button onclick="nextLesson()" class="px-7 py-3 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs sm:text-sm shadow-md shadow-emerald-500/20 flex items-center gap-1.5">
-                <span>Siguiente Microcápsula</span> →
-              </button>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Lesson Summary Card -->
-        <div class="glass-card rounded-2xl p-6 border border-slate-800">
-          <h3 class="text-sm font-bold text-cyan-400 uppercase tracking-wider mb-2 font-tech">Resumen y Recomendaciones</h3>
-          <p id="lesson-summary" class="text-slate-300 text-sm leading-relaxed">
-            Recuerde la regla de oro: <strong>Ningún banco o entidad solicita contraseñas por WhatsApp</strong>. Si un mensaje genera urgencia extrema, no abra el enlace y consulte primero con su tutor de LDDIGITALCO o un familiar de confianza.
+          <p class="text-slate-200 text-base sm:text-lg mb-8 leading-relaxed">
+            En <strong>LDDIGITALCO</strong> no necesita memorizar contraseñas difíciles. Escriba su correo electrónico y le enviaremos un enlace seguro para entrar en <strong>1 solo clic</strong>.
           </p>
-        </div>
 
-      </div>
+          <form id="magic-link-form" class="space-y-6" novalidate>
+            <div>
+              <label for="student-email" class="block text-base font-semibold text-white mb-2">
+                Su Correo Electrónico <span class="text-emerald-400" aria-hidden="true">*</span>
+              </label>
+              <input
+                type="email"
+                id="student-email"
+                name="email"
+                required
+                autocomplete="email"
+                placeholder="ejemplo@correo.com"
+                aria-describedby="email-help"
+                class="w-full text-base sm:text-lg px-5 py-4 rounded-xl bg-slate-900 border-2 border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all"
+              />
+              <p id="email-help" class="text-xs sm:text-sm text-slate-400 mt-2">
+                Le enviaremos un enlace seguro directo a este correo.
+              </p>
+            </div>
 
-      <!-- Right Col: Live Zoom Access & Playlist -->
-      <div class="space-y-6">
-        
-        <!-- Live Class 1-Click Card -->
-        <div class="glass-card rounded-3xl p-6 border-2 border-emerald-400 glow-green bg-gradient-to-b from-[#0c241a] to-slate-900 shadow-xl">
-          <div class="flex items-center justify-between mb-3">
-            <span class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-400 text-slate-950">Clase Grupal en Vivo</span>
-            <span class="text-xs text-emerald-400 font-mono font-bold">HOY 18:00</span>
+            <div>
+              <label for="student-name" class="block text-base font-semibold text-white mb-2">
+                Su Nombre <span class="text-slate-400 text-xs font-normal">(opcional)</span>
+              </label>
+              <input
+                type="text"
+                id="student-name"
+                name="nombre"
+                autocomplete="name"
+                placeholder="Ej. María o Carlos"
+                class="w-full text-base sm:text-lg px-5 py-4 rounded-xl bg-slate-900 border-2 border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all"
+              />
+            </div>
+
+            <div id="form-feedback" class="hidden" role="status" aria-live="polite"></div>
+
+            <button
+              type="submit"
+              id="submit-btn"
+              class="w-full min-h-[54px] py-4 px-6 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-base sm:text-lg shadow-lg shadow-emerald-500/30 transition-transform transform hover:scale-[1.01] flex items-center justify-center gap-3 cursor-pointer"
+            >
+              <span>📩</span>
+              <span id="submit-text">Enviar mi Enlace de Acceso en 1 Clic</span>
+            </button>
+          </form>
+
+          <div class="mt-8 pt-6 border-t border-slate-800 text-center">
+            <p class="text-sm text-slate-300 mb-3">
+              ¿Tiene dificultades para entrar o no recuerda su correo?
+            </p>
+            <a
+              href="https://wa.me/573000000000?text=Hola%20tutor%20de%20LDDIGITALCO,%20necesito%20ayuda%20para%20ingresar%20a%20mi%20Aula%20Digital."
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 text-sm font-semibold transition-colors"
+            >
+              <span>💬</span>
+              <span>Pedir Asistencia a un Tutor por WhatsApp</span>
+            </a>
           </div>
 
-          <h3 class="text-lg font-bold text-white font-tech">Taller en Directo: Práctica de Celular</h3>
-          <p class="text-slate-200 text-xs mt-1 mb-5">Conéctese con sus profesores para practicar juntos y resolver dudas en tiempo real.</p>
+        </div>
+      </section>
+    )}
 
-          <button onclick="alert('Abriendo Google Meet / Zoom de la clase en vivo... ¡Bienvenido!')" class="w-full py-4 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-sm shadow-lg shadow-emerald-500/30 transition-transform transform hover:scale-[1.02] flex items-center justify-center gap-2">
-            <span class="text-xl">📹</span>
-            <span>Entrar a mi Clase en 1 Clic</span>
-          </button>
+    {student && (
+      <div>
+        <!-- User Welcome & Stats Card -->
+        <div class="glass-card rounded-2xl p-6 border border-slate-800 mb-8 flex flex-wrap items-center justify-between gap-6">
+          <div>
+            <div class="flex items-center gap-3 mb-1">
+              <span class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-cyan-950 text-cyan-400 border border-cyan-500/30">
+                {student.rol === 'admin' ? 'Administrador' : student.rol === 'tutor' ? 'Tutor' : 'Estudiante Activo'}
+              </span>
+              <span class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-950 text-emerald-400 border border-emerald-500/30">
+                {student.nivel_acceso === 'inscripcion_completa' ? 'Inscripción Completa' : 'Ruta Abierta'}
+              </span>
+            </div>
+            <h1 class="text-2xl font-bold font-tech text-white">
+              Bienvenido, {student.nombre}
+            </h1>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Ruta actual: <span class="text-emerald-400 font-semibold">Ciberseguridad y Prevención de Estafas en WhatsApp</span>
+            </p>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div class="w-full sm:w-60">
+              <div class="flex justify-between text-xs font-semibold mb-1.5">
+                <span class="text-slate-400">Progreso Formativo</span>
+                <span id="progress-text" class="text-emerald-400 font-bold">50% Completado</span>
+              </div>
+              <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700">
+                <div id="progress-bar" class="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 rounded-full transition-all duration-500" style="width: 50%;"></div>
+              </div>
+            </div>
+
+            <form action="/api/auth/logout" method="POST">
+              <button
+                type="submit"
+                class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                title="Cerrar sesión segura"
+              >
+                <span>🚪</span> Salir
+              </button>
+            </form>
+          </div>
         </div>
 
-        <!-- Dynamic Curriculum Playlist -->
-        <div class="glass-card rounded-2xl p-6 border border-slate-800">
-          <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-4 font-tech">Cápsulas de la Ruta</h4>
+        <div class="grid lg:grid-cols-3 gap-8">
           
-          <div id="curriculum-list" class="space-y-2.5">
-            <!-- Rendered dynamically by js/lms.js -->
+          <div class="lg:col-span-2 space-y-6">
+            
+            <div class="glass-card rounded-3xl border border-slate-700/80 shadow-2xl">
+              
+              <div class="relative bg-slate-950 aspect-video flex flex-col items-center justify-center p-6 text-center border-b border-slate-800 bg-gradient-to-b from-slate-900 via-slate-950 to-black rounded-t-3xl">
+                <div onclick="nextLesson()" class="w-20 h-20 rounded-full bg-cyan-500/20 border-2 border-cyan-400 flex items-center justify-center text-cyan-400 text-3xl cursor-pointer hover:scale-110 transition-transform shadow-lg shadow-cyan-500/30">
+                  ▶
+                </div>
+                <h2 id="lesson-title" class="text-lg sm:text-xl font-bold text-white mt-4 font-tech max-w-xl">
+                  Cápsula #3: Cómo identificar un mensaje o enlace de estafa en WhatsApp
+                </h2>
+                <p id="lesson-duration" class="text-xs text-slate-400 mt-1">Duración: 02:45 • Explicado paso a paso</p>
+
+                <div class="absolute bottom-4 left-6 right-6 flex items-center justify-between text-xs text-slate-400 font-mono">
+                  <span>01:15 / 02:45</span>
+                  <div class="flex-1 mx-4 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div class="h-full bg-cyan-400 w-1/2"></div>
+                  </div>
+                  <span>🔊 100%</span>
+                </div>
+              </div>
+
+              <div class="p-6 bg-slate-900/90 flex flex-wrap items-center justify-between gap-4 rounded-b-3xl">
+                <button onclick="prevLesson()" class="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs sm:text-sm border border-slate-700 flex items-center gap-2 cursor-pointer">
+                  ← Microcápsula Anterior
+                </button>
+
+                <div class="flex items-center gap-3">
+                  <button onclick="openWhatsApp('Hola tutor de LDDIGITALCO, estoy en la cápsula de WhatsApp y tengo una duda.')" class="px-5 py-3 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 font-semibold text-xs sm:text-sm flex items-center gap-1.5 cursor-pointer">
+                    <span>❓</span> Tengo una Duda
+                  </button>
+
+                  <button onclick="nextLesson()" class="px-7 py-3 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs sm:text-sm shadow-md shadow-emerald-500/20 flex items-center gap-1.5 cursor-pointer">
+                    <span>Siguiente Microcápsula</span> →
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="glass-card rounded-2xl p-6 border border-slate-800">
+              <h3 class="text-sm font-bold text-cyan-400 uppercase tracking-wider mb-2 font-tech">Resumen y Recomendaciones</h3>
+              <p id="lesson-summary" class="text-slate-300 text-sm leading-relaxed">
+                Recuerde la regla de oro: <strong>Ningún banco o entidad solicita contraseñas por WhatsApp</strong>. Si un mensaje genera urgencia extrema, no abra el enlace y consulte primero con su tutor de LDDIGITALCO o un familiar de confianza.
+              </p>
+            </div>
+
           </div>
+
+          <div class="space-y-6">
+            
+            <div class="glass-card rounded-3xl p-6 border-2 border-emerald-400 glow-green bg-gradient-to-b from-[#0c241a] to-slate-900 shadow-xl">
+              <div class="flex items-center justify-between mb-3">
+                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-400 text-slate-950">Sesión en Vivo</span>
+                <span class="text-xs text-emerald-400 font-mono font-bold">HOY 18:00</span>
+              </div>
+
+              <h3 class="text-lg font-bold text-white font-tech">Taller en Directo: Práctica de Celular</h3>
+              <p class="text-slate-200 text-xs mt-1 mb-5">Conéctese con sus profesores para practicar juntos y resolver dudas en tiempo real.</p>
+
+              <button onclick="alert('Abriendo Google Meet / Zoom de la clase en vivo... ¡Bienvenido!')" class="w-full py-4 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-sm shadow-lg shadow-emerald-500/30 transition-transform transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer">
+                <span class="text-xl">📹</span>
+                <span>Entrar a mi Clase en 1 Clic</span>
+              </button>
+            </div>
+
+            <div class="glass-card rounded-2xl p-6 border border-slate-800">
+              <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-4 font-tech">Microcápsulas de la Ruta</h4>
+              
+              <div id="curriculum-list" class="space-y-2.5">
+                <!-- Rendered dynamically by js/lms.js -->
+              </div>
+            </div>
+
+          </div>
+
         </div>
-
       </div>
-
-    </div>
+    )}
 
   </main>
+
+  <script is:inline>
+    // Client-side handling for Magic Link submission
+    const form = document.getElementById('magic-link-form');
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const emailInput = document.getElementById('student-email');
+        const nameInput = document.getElementById('student-name');
+        const feedback = document.getElementById('form-feedback');
+        const submitBtn = document.getElementById('submit-btn');
+        const submitText = document.getElementById('submit-text');
+
+        const email = emailInput?.value?.trim();
+        const nombre = nameInput?.value?.trim();
+
+        if (!email) {
+          if (feedback) {
+            feedback.className = 'p-4 rounded-xl bg-red-950/80 border border-red-500 text-red-200 text-sm font-medium';
+            feedback.innerHTML = '⚠️ Por favor, escriba su correo electrónico.';
+          }
+          return;
+        }
+
+        // Estado de carga
+        if (submitBtn) submitBtn.disabled = true;
+        if (submitText) submitText.textContent = 'Enviando su enlace seguro...';
+        if (feedback) {
+          feedback.className = 'hidden';
+          feedback.innerHTML = '';
+        }
+
+        try {
+          const res = await fetch('/api/auth/magic-link', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, nombre }),
+          });
+
+          const data = await res.json();
+
+          if (res.ok && data.success) {
+            if (feedback) {
+              feedback.className = 'p-5 rounded-2xl bg-emerald-950/80 border-2 border-emerald-400 text-emerald-200 text-sm leading-relaxed';
+              feedback.innerHTML = `
+                <div class="flex items-start gap-3">
+                  <span class="text-2xl">✉️</span>
+                  <div>
+                    <strong class="text-white block text-base mb-1">¡Enlace de acceso enviado!</strong>
+                    Hemos enviado un enlace seguro a <strong>${email}</strong>.<br>
+                    Abra su correo y haga clic en el botón verde para entrar automáticamente a su Aula Digital.
+                  </div>
+                </div>
+              `;
+            }
+            if (form) form.reset();
+            if (submitText) submitText.textContent = 'Reenviar Enlace de Acceso';
+          } else {
+            if (feedback) {
+              feedback.className = 'p-4 rounded-xl bg-amber-950/80 border border-amber-500 text-amber-200 text-sm font-medium';
+              feedback.innerHTML = `⚠️ ${data.error || 'No se pudo enviar el enlace. Intente nuevamente.'}`;
+            }
+            if (submitText) submitText.textContent = 'Enviar mi Enlace de Acceso en 1 Clic';
+          }
+        } catch (err) {
+          if (feedback) {
+            feedback.className = 'p-4 rounded-xl bg-red-950/80 border border-red-500 text-red-200 text-sm font-medium';
+            feedback.innerHTML = '⚠️ Ocurrió un error de conexión al enviar el enlace. Verifique su internet e intente nuevamente.';
+          }
+          if (submitText) submitText.textContent = 'Enviar mi Enlace de Acceso en 1 Clic';
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
+        }
+      });
+    }
+  </script>
 
   <script is:inline src="/js/lms.js"></script>
 </BaseLayout>

@@ -6,5 +6,10 @@ export default defineConfig({
   output: 'server',
   adapter: cloudflare({
     imageService: 'passthrough'
-  })
+  }),
+  vite: {
+    ssr: {
+      external: ['node:sqlite']
+    }
+  }
 });
