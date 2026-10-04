@@ -1,0 +1,713 @@
+---
+// LDDIGITALCO — Centro de Control y Administración (Admin Dashboard)
+// Gestión de Estudiantes, Niveles de Acceso, Sesiones en Vivo y Consultas Formativas
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getAuthServiceFromContext, getDbFromContext, getEnvFromContext } from '../lib/auth';
+import { getAllStudents } from '../lib/db/estudiantes';
+import { getAllConsultas } from '../lib/db/consultas';
+import { getConfiguredLiveSession, getUpcomingLiveSession } from '../lib/courses/live-session';
+import { getAllRoutes } from '../lib/courses';
+
+export const prerender = false;
+
+const authService = getAuthServiceFromContext(Astro);
+const env = getEnvFromContext(Astro);
+const session = await authService.getSessionFromRequest(Astro.request);
+const expectedAdminKey = env.ADMIN_KEY || 'dev-admin-secret';
+
+// Verificar cookie o cabecera de admin
+const adminCookie = Astro.cookies.get('lms_admin_key')?.value;
+const isAdminAuthorized = (session && session.rol === 'admin') || adminCookie === expectedAdminKey;
+
+const db = getDbFromContext(Astro);
+let students: any[] = [];
+let consultas: any[] = [];
+let liveConfig = getConfiguredLiveSession();
+let liveStatus = getUpcomingLiveSession();
+let routes = getAllRoutes();
+
+if (isAdminAuthorized) {
+  try {
+    students = await getAllStudents(db, 200);
+    consultas = await getAllConsultas(db, 200);
+  } catch (err) {
+    console.error('Error fetching admin data:', err);
+  }
+}
+
+const isD1Live = Boolean(env.DB);
+const hasResend = Boolean(env.RESEND_API_KEY);
+const hasAuthSecret = Boolean(env.AUTH_SECRET);
+const tutorEmail = env.TUTOR_EMAIL || 'tutor@lddigital.co';
+---
+
+<BaseLayout title="Centro de Control & Administración — LDDIGITALCO" activeNav="admin">
+  <main class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex-1">
+    
+    <!-- Header Principal -->
+    <header class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-800 pb-6">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-xl shadow-[0_0_15px_rgba(0,255,135,0.2)]">
+            ⚙️
+          </div>
+          <h1 class="text-3xl font-extrabold text-white tracking-tight">
+            Centro de Control & Administración
+          </h1>
+        </div>
+        <p class="text-slate-300 text-sm mt-1">
+          Gestione los niveles de acceso de los estudiantes, configure las sesiones en vivo y supervise las consultas formativas.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a
+          href="/alumnos"
+          class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition-colors inline-flex items-center gap-2"
+        >
+          <span>👁️</span> Ver Portal de Estudiantes
+        </a>
+        {isAdminAuthorized && (
+          <button
+            id="btn-admin-logout"
+            class="px-4 py-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 border border-rose-500/50 text-rose-300 text-xs font-bold transition-colors"
+          >
+            Cerrar Sesión Admin
+          </button>
+        )}
+      </div>
+    </header>
+
+    {!isAdminAuthorized && (
+      <section aria-labelledby="unlock-heading" class="max-w-xl mx-auto my-12">
+        <div class="glass-card rounded-3xl p-8 sm:p-10 border-2 border-slate-700 shadow-2xl relative">
+          <div class="text-center mb-6">
+            <span class="text-4xl block mb-2">🔐</span>
+            <h2 id="unlock-heading" class="text-2xl font-bold text-white">Acceso al Panel de Control</h2>
+            <p class="text-slate-300 text-sm mt-2">
+              Ingrese la <strong>Clave Secreta de Administración</strong> configurada en el entorno (<code class="bg-slate-800 px-2 py-0.5 rounded text-emerald-400">ADMIN_KEY</code>).
+            </p>
+          </div>
+
+          <form id="admin-unlock-form" class="space-y-4">
+            <div>
+              <label for="admin-key-input" class="block text-sm font-bold text-slate-200 mb-1">
+                Clave de Administración
+              </label>
+              <input
+                type="password"
+                id="admin-key-input"
+                required
+                placeholder="Ingrese su clave secreta de administración"
+                class="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              />
+            </div>
+
+            <div id="unlock-error" class="hidden p-3 rounded-xl bg-rose-950/80 border border-rose-500/60 text-rose-300 text-xs">
+              Clave de administración incorrecta. Por favor intente nuevamente.
+            </div>
+
+            <button
+              type="submit"
+              class="w-full py-3.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-sm tracking-wide shadow-[0_0_20px_rgba(0,255,135,0.3)] transition-all"
+            >
+              Ingresar al Panel
+            </button>
+          </form>
+
+          <div class="mt-6 pt-5 border-t border-slate-800/80 text-center">
+            <p class="text-xs text-slate-400">
+              💡 Modo desarrollo: Clave predeterminada <code class="text-cyan-400 font-mono">dev-admin-secret</code>
+            </p>
+          </div>
+        </div>
+      </section>
+    )}
+
+    {isAdminAuthorized && (
+      <div class="space-y-8">
+
+        <!-- Métricas Clave -->
+        <section aria-labelledby="kpi-heading" class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <h2 id="kpi-heading" class="sr-only">Métricas Generales</h2>
+          
+          <div class="glass-card p-5 rounded-2xl border border-slate-800">
+            <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">Estudiantes</span>
+            <span class="text-3xl font-extrabold text-white mt-1 block">{students.length}</span>
+            <span class="text-xs text-slate-400 mt-1 block">Registrados en total</span>
+          </div>
+
+          <div class="glass-card p-5 rounded-2xl border border-emerald-900/40 bg-emerald-950/20">
+            <span class="text-xs text-emerald-400 font-semibold block uppercase tracking-wider">Inscripción Completa</span>
+            <span class="text-3xl font-extrabold text-emerald-300 mt-1 block">
+              {students.filter(s => s.nivel_acceso === 'inscripcion_completa').length}
+            </span>
+            <span class="text-xs text-emerald-400/80 mt-1 block">Acceso total + talleres</span>
+          </div>
+
+          <div class="glass-card p-5 rounded-2xl border border-cyan-900/40 bg-cyan-950/20">
+            <span class="text-xs text-cyan-400 font-semibold block uppercase tracking-wider">Ruta Abierta</span>
+            <span class="text-3xl font-extrabold text-cyan-300 mt-1 block">
+              {students.filter(s => s.nivel_acceso === 'ruta_abierta').length}
+            </span>
+            <span class="text-xs text-cyan-400/80 mt-1 block">Módulo introductorio</span>
+          </div>
+
+          <div class="glass-card p-5 rounded-2xl border border-amber-900/40 bg-amber-950/20">
+            <span class="text-xs text-amber-400 font-semibold block uppercase tracking-wider">Dudas Pendientes</span>
+            <span class="text-3xl font-extrabold text-amber-300 mt-1 block">
+              {consultas.filter(c => c.estado === 'pendiente').length}
+            </span>
+            <span class="text-xs text-amber-400/80 mt-1 block">Por resolver con el tutor</span>
+          </div>
+
+          <div class="glass-card p-5 rounded-2xl border border-slate-800 col-span-2 lg:col-span-1">
+            <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">Rutas en EmDash</span>
+            <span class="text-3xl font-extrabold text-white mt-1 block">{routes.length}</span>
+            <span class="text-xs text-slate-400 mt-1 block">Catálogo Markdown</span>
+          </div>
+        </section>
+
+        <!-- Diagnóstico y Estado del Entorno de Producción -->
+        <section aria-labelledby="env-heading" class="glass-card p-6 rounded-2xl border border-slate-800">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🩺</span>
+              <h2 id="env-heading" class="text-lg font-bold text-white">Estado del Entorno y Conexiones</h2>
+            </div>
+            <span class={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${isD1Live ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/40' : 'bg-amber-950 text-amber-400 border border-amber-500/40'}`}>
+              {isD1Live ? 'Producción Cloudflare D1' : 'Modo Memoria / Local'}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+            <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
+              <span class="text-slate-400 block mb-1">Base de Datos D1</span>
+              <strong class="text-slate-200">{isD1Live ? 'Conectado a Cloudflare Edge (D1)' : 'SQLite In-Memory (Node.js)'}</strong>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
+              <span class="text-slate-400 block mb-1">Servicio de Correo (Magic Links & Dudas)</span>
+              <strong class={hasResend ? 'text-emerald-400' : 'text-amber-400'}>
+                {hasResend ? 'API Resend Activa' : 'Simulación (FakeEmailService)'}
+              </strong>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
+              <span class="text-slate-400 block mb-1">Criptografía (HMAC-SHA256)</span>
+              <strong class={hasAuthSecret ? 'text-emerald-400' : 'text-amber-400'}>
+                {hasAuthSecret ? 'AUTH_SECRET Configurado' : 'AUTH_SECRET por Defecto (Dev)'}
+              </strong>
+            </div>
+
+            <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
+              <span class="text-slate-400 block mb-1">Correo de Alertas del Tutor</span>
+              <strong class="text-cyan-400 truncate block">{tutorEmail}</strong>
+            </div>
+          </div>
+        </section>
+
+        <!-- Bloque de 2 Columnas: Sesión en Vivo y Contenido EmDash -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          <!-- Configuración de Sesión en Vivo (7 columnas) -->
+          <section aria-labelledby="live-heading" class="lg:col-span-7 glass-card p-6 rounded-2xl border border-slate-800 space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">📹</span>
+                <div>
+                  <h2 id="live-heading" class="text-lg font-bold text-white">Configuración del Taller en Vivo</h2>
+                  <p class="text-xs text-slate-400">Modifique la fecha, hora y enlace de Zoom o Meet para los alumnos con Inscripción Completa.</p>
+                </div>
+              </div>
+              <span class={`px-3 py-1 rounded-full text-xs font-bold ${liveStatus.canJoin ? 'bg-emerald-950 text-emerald-400 border border-emerald-500' : 'bg-slate-800 text-slate-300'}`}>
+                {liveStatus.startsInDisplay}
+              </span>
+            </div>
+
+            <form id="live-session-form" class="space-y-4 text-sm">
+              <div>
+                <label for="live-title" class="block font-semibold text-slate-200 mb-1">Título de la Sesión</label>
+                <input
+                  type="text"
+                  id="live-title"
+                  name="title"
+                  value={liveConfig.title}
+                  required
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                />
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="live-date" class="block font-semibold text-slate-200 mb-1">Fecha y Hora Programada (ISO)</label>
+                  <input
+                    type="text"
+                    id="live-date"
+                    name="scheduledAt"
+                    value={liveConfig.scheduledAt}
+                    required
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                  <span class="text-xs text-slate-400 mt-1 block">Ejemplo: 2026-10-07T18:00:00.000Z</span>
+                </div>
+
+                <div>
+                  <label for="live-duration" class="block font-semibold text-slate-200 mb-1">Duración (minutos)</label>
+                  <input
+                    type="number"
+                    id="live-duration"
+                    name="durationMinutes"
+                    value={liveConfig.durationMinutes || 60}
+                    min="15"
+                    max="180"
+                    required
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label for="live-meet" class="block font-semibold text-slate-200 mb-1">Enlace de Conexión (Google Meet / Zoom)</label>
+                <input
+                  type="url"
+                  id="live-meet"
+                  name="meetUrl"
+                  value={liveConfig.meetUrl}
+                  required
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                />
+              </div>
+
+              <div id="live-save-status" class="hidden p-3 rounded-xl text-xs font-semibold"></div>
+
+              <div class="flex items-center justify-between pt-2">
+                <span class="text-xs text-slate-400">
+                  Visible para: <strong>Inscripción Completa</strong>
+                </span>
+                <button
+                  type="submit"
+                  class="px-5 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs shadow-md transition-all"
+                >
+                  💾 Guardar Sesión en Vivo
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <!-- Catálogo EmDash (5 columnas) -->
+          <section aria-labelledby="catalog-heading" class="lg:col-span-5 glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
+            <div class="flex items-center gap-2 border-b border-slate-800/80 pb-4">
+              <span class="text-2xl">📚</span>
+              <div>
+                <h2 id="catalog-heading" class="text-lg font-bold text-white">Catálogo EmDash CMS</h2>
+                <p class="text-xs text-slate-400">Colecciones Astro Content Layer cargadas desde <code class="text-emerald-400">src/content/rutas/*.md</code></p>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              {routes.map((r: any) => (
+                <div class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+                  <div class="flex items-start justify-between gap-2">
+                    <h3 class="font-bold text-sm text-slate-200">{r.titulo}</h3>
+                    <span class={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${r.nivel === 'inscripcion_completa' ? 'bg-amber-950 text-amber-300 border border-amber-600/40' : 'bg-cyan-950 text-cyan-300 border border-cyan-600/40'}`}>
+                      {r.nivel === 'inscripcion_completa' ? 'Inscripción Completa' : 'Ruta Abierta'}
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-400">{r.descripcion}</p>
+                  <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-900">
+                    <span>{r.microcapsulas.length} microcápsulas</span>
+                    <span>Duración: {r.duracionTotal}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <!-- Tabla de Estudiantes & Niveles de Acceso -->
+        <section aria-labelledby="students-heading" class="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-800/80 pb-4">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl">👥</span>
+              <div>
+                <h2 id="students-heading" class="text-lg font-bold text-white">Gestión de Estudiantes & Acceso Escalonado</h2>
+                <p class="text-xs text-slate-400">Pase a los alumnos de Ruta Abierta a Inscripción Completa en 1 clic.</p>
+              </div>
+            </div>
+            
+            <input
+              type="text"
+              id="student-search-input"
+              placeholder="Buscar por email o nombre..."
+              class="px-3.5 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-400 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            />
+          </div>
+
+          <!-- Formulario rápido de invitación / registro de estudiante -->
+          <form id="quick-add-student-form" class="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 flex flex-col md:flex-row items-center gap-3">
+            <span class="text-xs font-bold text-slate-300 whitespace-nowrap">➕ Nuevo Estudiante:</span>
+            <input
+              type="text"
+              id="new-student-name"
+              placeholder="Nombre completo"
+              required
+              class="w-full md:w-48 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            />
+            <input
+              type="email"
+              id="new-student-email"
+              placeholder="correo@ejemplo.com"
+              required
+              class="w-full md:w-64 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            />
+            <select
+              id="new-student-tier"
+              class="w-full md:w-44 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            >
+              <option value="ruta_abierta">Ruta Abierta</option>
+              <option value="inscripcion_completa">Inscripción Completa</option>
+            </select>
+            <button
+              type="submit"
+              class="w-full md:w-auto px-4 py-1.5 rounded-lg bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs whitespace-nowrap transition-colors"
+            >
+              Registrar / Enviar Acceso
+            </button>
+          </form>
+
+          <div id="quick-add-msg" class="hidden text-xs font-semibold p-2.5 rounded-lg"></div>
+
+          <!-- Tabla de Estudiantes -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300 border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
+                  <th class="py-3 px-4">Estudiante</th>
+                  <th class="py-3 px-4">Correo Electrónico</th>
+                  <th class="py-3 px-4">Rol</th>
+                  <th class="py-3 px-4">Nivel Actual</th>
+                  <th class="py-3 px-4">Registrado</th>
+                  <th class="py-3 px-4 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="students-table-body" class="divide-y divide-slate-800/60">
+                {students.length === 0 ? (
+                  <tr>
+                    <td colspan="6" class="py-6 text-center text-slate-400">
+                      No hay estudiantes registrados aún. Registre uno con el formulario superior.
+                    </td>
+                  </tr>
+                ) : (
+                  students.map((st: any) => {
+                    const isFull = st.nivel_acceso === 'inscripcion_completa';
+                    return (
+                      <tr class="hover:bg-slate-800/30 transition-colors student-row" data-email={st.email.toLowerCase()} data-name={st.nombre.toLowerCase()}>
+                        <td class="py-3 px-4 font-semibold text-white">{st.nombre}</td>
+                        <td class="py-3 px-4 font-mono text-slate-300">{st.email}</td>
+                        <td class="py-3 px-4 capitalize">{st.rol}</td>
+                        <td class="py-3 px-4">
+                          <span class={`inline-block px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${isFull ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/40' : 'bg-cyan-950 text-cyan-300 border border-cyan-500/40'}`}>
+                            {isFull ? 'Inscripción Completa' : 'Ruta Abierta'}
+                          </span>
+                        </td>
+                        <td class="py-3 px-4 text-slate-400">
+                          {new Date(st.creado_en).toLocaleDateString('es-CO')}
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                          <button
+                            class={`btn-toggle-tier px-3 py-1.5 rounded-lg font-bold text-xs transition-colors ${isFull ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700' : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'}`}
+                            data-email={st.email}
+                            data-current-tier={st.nivel_acceso}
+                          >
+                            {isFull ? 'Degradar a Ruta Abierta' : '⚡ Activar Inscripción Completa'}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Bandeja de Consultas Formativas («Tengo una Duda») -->
+        <section aria-labelledby="consultas-heading" class="glass-card p-6 rounded-2xl border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl">❓</span>
+              <div>
+                <h2 id="consultas-heading" class="text-lg font-bold text-white">Bandeja de Consultas Formativas («Tengo una Duda»)</h2>
+                <p class="text-xs text-slate-400">Preguntas enviadas por los estudiantes durante la visualización de las microcápsulas.</p>
+              </div>
+            </div>
+            <span class="text-xs text-slate-400">
+              {consultas.length} consultas registradas
+            </span>
+          </div>
+
+          <div class="space-y-3">
+            {consultas.length === 0 ? (
+              <p class="text-sm text-slate-400 py-6 text-center">
+                No hay dudas enviadas por estudiantes aún.
+              </p>
+            ) : (
+              consultas.map((c: any) => {
+                const isPending = c.estado === 'pendiente';
+                return (
+                  <div class={`p-4 rounded-xl bg-slate-950/70 border ${isPending ? 'border-amber-600/40 bg-amber-950/10' : 'border-slate-800'} space-y-2`}>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div class="flex items-center gap-2">
+                        <span class="font-bold text-sm text-white">{c.estudiante_nombre || 'Estudiante'}</span>
+                        <span class="text-xs text-slate-400 font-mono">({c.estudiante_email || c.estudiante_id})</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${isPending ? 'bg-amber-950 text-amber-300 border border-amber-500/40' : 'bg-emerald-950 text-emerald-300 border border-emerald-500/40'}`}>
+                          {c.estado}
+                        </span>
+                        <span class="text-xs text-slate-400">
+                          {new Date(c.creado_en).toLocaleString('es-CO')}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="text-xs text-cyan-400 font-mono">
+                      Microcápsula: {c.microcapsula_slug}
+                    </div>
+
+                    <p class="text-sm text-slate-200 bg-slate-900/60 p-3 rounded-lg border border-slate-800 whitespace-pre-wrap">
+                      {c.mensaje}
+                    </p>
+
+                    <div class="flex justify-end pt-1">
+                      <button
+                        class={`btn-toggle-consulta px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${isPending ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}`}
+                        data-id={c.id}
+                        data-next-state={isPending ? 'respondida' : 'pendiente'}
+                      >
+                        {isPending ? '✓ Marcar como Respondida' : '↺ Reabrir Duda'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </section>
+
+      </div>
+    )}
+
+  </main>
+</BaseLayout>
+
+<script is:inline>
+  // Interacción del Cliente en el Panel de Administración
+  (function() {
+    // 1. Desbloqueo de Administración
+    const unlockForm = document.getElementById('admin-unlock-form');
+    if (unlockForm) {
+      unlockForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const key = document.getElementById('admin-key-input').value.trim();
+        if (!key) return;
+
+        // Guardar en cookie por 7 días
+        const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString();
+        document.cookie = 'lms_admin_key=' + encodeURIComponent(key) + '; path=/; expires=' + expires + '; SameSite=Lax';
+        
+        window.location.reload();
+      });
+    }
+
+    // 2. Cerrar sesión de Admin
+    const btnLogout = document.getElementById('btn-admin-logout');
+    if (btnLogout) {
+      btnLogout.addEventListener('click', function() {
+        document.cookie = 'lms_admin_key=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+        window.location.reload();
+      });
+    }
+
+    // Obtener la clave de administración activa
+    function getAdminKey() {
+      const match = document.cookie.match(new RegExp('(^| )lms_admin_key=([^;]+)'));
+      return match ? decodeURIComponent(match[2]) : 'dev-admin-secret';
+    }
+
+    // 3. Guardar Sesión en Vivo
+    const liveForm = document.getElementById('live-session-form');
+    const liveStatusBox = document.getElementById('live-save-status');
+    if (liveForm) {
+      liveForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const title = document.getElementById('live-title').value.trim();
+        const scheduledAt = document.getElementById('live-date').value.trim();
+        const durationMinutes = parseInt(document.getElementById('live-duration').value, 10) || 60;
+        const meetUrl = document.getElementById('live-meet').value.trim();
+
+        liveStatusBox.className = 'p-3 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 block';
+        liveStatusBox.textContent = 'Guardando configuración de la sesión...';
+
+        try {
+          const res = await fetch('/api/admin/live-session', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-admin-key': getAdminKey(),
+            },
+            body: JSON.stringify({
+              title,
+              scheduledAt,
+              durationMinutes,
+              meetUrl,
+            }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            liveStatusBox.className = 'p-3 rounded-xl text-xs font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-500/50 block';
+            liveStatusBox.textContent = '¡Sesión en vivo guardada exitosamente! Se actualizará para los estudiantes de inmediato.';
+            setTimeout(() => window.location.reload(), 1200);
+          } else {
+            throw new Error(data.error || 'Error al guardar sesión');
+          }
+        } catch (err) {
+          liveStatusBox.className = 'p-3 rounded-xl text-xs font-semibold bg-rose-950/80 text-rose-300 border border-rose-500/50 block';
+          liveStatusBox.textContent = 'Error: ' + err.message;
+        }
+      });
+    }
+
+    // 4. Cambiar Nivel de Acceso de Estudiantes
+    const tierButtons = document.querySelectorAll('.btn-toggle-tier');
+    tierButtons.forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const email = this.dataset.email;
+        const currentTier = this.dataset.currentTier;
+        const targetTier = currentTier === 'inscripcion_completa' ? 'ruta_abierta' : 'inscripcion_completa';
+
+        const label = targetTier === 'inscripcion_completa' ? 'Inscripción Completa' : 'Ruta Abierta';
+        if (!confirm('¿Desea cambiar el nivel de ' + email + ' a ' + label + '?')) {
+          return;
+        }
+
+        try {
+          const res = await fetch('/api/students/upgrade', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-admin-key': getAdminKey(),
+            },
+            body: JSON.stringify({
+              email,
+              nivelAcceso: targetTier,
+            }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            window.location.reload();
+          } else {
+            alert('Error: ' + (data.error || 'No se pudo actualizar'));
+          }
+        } catch (err) {
+          alert('Error de conexión: ' + err.message);
+        }
+      });
+    });
+
+    // 5. Registrar / Invitar Nuevo Estudiante
+    const quickAddForm = document.getElementById('quick-add-student-form');
+    const quickAddMsg = document.getElementById('quick-add-msg');
+    if (quickAddForm) {
+      quickAddForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const nombre = document.getElementById('new-student-name').value.trim();
+        const email = document.getElementById('new-student-email').value.trim();
+        const tier = document.getElementById('new-student-tier').value;
+
+        quickAddMsg.className = 'text-xs font-semibold p-2.5 rounded-lg bg-slate-800 text-slate-300 block';
+        quickAddMsg.textContent = 'Registrando estudiante y enviando enlace de acceso...';
+
+        try {
+          const res = await fetch('/api/auth/magic-link', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, nombre }),
+          });
+          const data = await res.json();
+
+          if (!data.success) throw new Error(data.error || 'Error al crear estudiante');
+
+          if (tier === 'inscripcion_completa') {
+            await fetch('/api/students/upgrade', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-admin-key': getAdminKey(),
+              },
+              body: JSON.stringify({ email, nivelAcceso: 'inscripcion_completa' }),
+            });
+          }
+
+          quickAddMsg.className = 'text-xs font-semibold p-2.5 rounded-lg bg-emerald-950/80 text-emerald-300 border border-emerald-500/50 block';
+          quickAddMsg.textContent = '¡Estudiante registrado exitosamente con nivel ' + tier + '! Enlace de acceso despachado.';
+          setTimeout(() => window.location.reload(), 1200);
+        } catch (err) {
+          quickAddMsg.className = 'text-xs font-semibold p-2.5 rounded-lg bg-rose-950/80 text-rose-300 border border-rose-500/50 block';
+          quickAddMsg.textContent = 'Error: ' + err.message;
+        }
+      });
+    }
+
+    // 6. Cambiar Estado de Consultas
+    const consultaButtons = document.querySelectorAll('.btn-toggle-consulta');
+    consultaButtons.forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const id = this.dataset.id;
+        const nextState = this.dataset.nextState;
+
+        try {
+          const res = await fetch('/api/admin/consultas/status', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-admin-key': getAdminKey(),
+            },
+            body: JSON.stringify({
+              consultaId: id,
+              estado: nextState,
+            }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            window.location.reload();
+          } else {
+            alert('Error: ' + (data.error || 'No se pudo actualizar'));
+          }
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
+      });
+    });
+
+    // 7. Filtro de Búsqueda de Estudiantes
+    const searchInput = document.getElementById('student-search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase().trim();
+        const rows = document.querySelectorAll('.student-row');
+        rows.forEach(row => {
+          const email = row.dataset.email || '';
+          const name = row.dataset.name || '';
+          if (email.includes(query) || name.includes(query)) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        });
+      });
+    }
+
+  })();
+</script>

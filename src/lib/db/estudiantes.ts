@@ -74,3 +74,15 @@ export async function upgradeStudentAccess(
   return getStudentByEmail(db, normalizedEmail);
 }
 
+export async function getAllStudents(
+  db: D1Database,
+  limit = 100
+): Promise<Estudiante[]> {
+  const result = await db
+    .prepare('SELECT id, email, nombre, rol, nivel_acceso, creado_en FROM estudiantes ORDER BY creado_en DESC LIMIT ?')
+    .bind(limit)
+    .all<Estudiante>();
+  return result.results || [];
+}
+
+
