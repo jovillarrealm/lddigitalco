@@ -4,9 +4,6 @@
 import {
   AuthService,
   type AuthServiceOptions,
-  type RequestMagicLinkInput,
-  type RequestMagicLinkResult,
-  type VerifyMagicLinkResult,
 } from './service';
 import type { SessionPayload } from './crypto';
 import type { Estudiante, NivelAcceso } from '../db/types';
@@ -25,8 +22,9 @@ export interface ActualizarNivelResult {
   success: boolean;
   message?: string;
   error?: string;
-  student?: Estudiante;
+  student?: Estudiante | null;
 }
+
 
 export class AccesoEstudiante extends AuthService {
   constructor(options: AuthServiceOptions) {

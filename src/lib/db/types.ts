@@ -32,14 +32,17 @@ export interface D1Database {
   exec(query: string): Promise<D1ExecResult>;
 }
 
+export type NivelAcceso = 'ruta_abierta' | 'inscripcion_completa';
+
 export interface Estudiante {
   id: string;
   email: string;
   nombre: string;
   rol: 'estudiante' | 'tutor' | 'admin';
-  nivel_acceso: 'ruta_abierta' | 'inscripcion_completa';
+  nivel_acceso: NivelAcceso;
   creado_en: string;
 }
+
 
 export interface Progreso {
   id: number;
