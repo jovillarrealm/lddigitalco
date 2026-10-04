@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+.npm
+
+# Build outputs
+dist/
+.astro/
+
+# Environment files
+.env
+.env.*
+
+# Scratch and OS files
+.scratch/
+.DS_Store
+Thumbs.db
