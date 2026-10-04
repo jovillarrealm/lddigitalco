@@ -30,6 +30,18 @@ function getDevDb(): D1Database {
       );
       CREATE INDEX IF NOT EXISTS idx_progreso_estudiante ON progreso(estudiante_id);
       CREATE INDEX IF NOT EXISTS idx_progreso_slug ON progreso(microcapsula_slug);
+
+      CREATE TABLE IF NOT EXISTS consultas (
+        id TEXT PRIMARY KEY,
+        estudiante_id TEXT NOT NULL,
+        microcapsula_slug TEXT NOT NULL,
+        mensaje TEXT NOT NULL,
+        estado TEXT NOT NULL DEFAULT 'pendiente',
+        creado_en TEXT NOT NULL,
+        FOREIGN KEY (estudiante_id) REFERENCES estudiantes(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_consultas_estudiante ON consultas(estudiante_id);
+      CREATE INDEX IF NOT EXISTS idx_consultas_slug ON consultas(microcapsula_slug);
     `);
   }
   return devDb;
@@ -41,13 +53,17 @@ export interface AuthContextInput {
   url?: URL;
 }
 
+export function getEnvFromContext(context: AuthContextInput): Record<string, any> {
+  return (context.locals as any)?.runtime?.env || (typeof process !== 'undefined' ? process.env : {});
+}
+
 export function getDbFromContext(context: AuthContextInput): D1Database {
-  const env = context.locals?.runtime?.env || (typeof process !== 'undefined' ? process.env : {});
+  const env = getEnvFromContext(context);
   return env.DB || getDevDb();
 }
 
 export function getAuthServiceFromContext(context: AuthContextInput): AuthService {
-  const env = context.locals?.runtime?.env || (typeof process !== 'undefined' ? process.env : {});
+  const env = getEnvFromContext(context);
   const db: D1Database = getDbFromContext(context);
   const secret: string = env.AUTH_SECRET || 'lddigitalco-secret-key-32-chars-minimum-dev';
   const emailService = getEmailService(env);

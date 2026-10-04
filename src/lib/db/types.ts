@@ -48,3 +48,12 @@ export interface Progreso {
   completado_en: string;
 }
 
+export interface Consulta {
+  id: string;
+  estudiante_id: string;
+  microcapsula_slug: string;
+  mensaje: string;
+  estado: 'pendiente' | 'respondida' | 'archivada' | string;
+  creado_en: string;
+}
+
