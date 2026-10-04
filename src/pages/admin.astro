@@ -5,7 +5,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { getAuthServiceFromContext, getDbFromContext, getEnvFromContext } from '../lib/auth';
 import { getAllStudents } from '../lib/db/estudiantes';
 import { getAllConsultas } from '../lib/db/consultas';
-import { getSesionEnVivoManagerFromContext } from '../lib/courses/live-session';
+import { DEFAULT_LIVE_SESSION, getUpcomingLiveSession, getSesionEnVivoManagerFromContext } from '../lib/courses/live-session';
 import { getAllRoutes } from '../lib/courses';
 
 export const prerender = false;
@@ -17,22 +17,41 @@ const expectedAdminKey = env.ADMIN_KEY || 'dev-admin-secret';
 
 // Verificar cookie o cabecera de admin
 const adminCookie = Astro.cookies.get('lms_admin_key')?.value;
-const isAdminAuthorized = (session && session.rol === 'admin') || adminCookie === expectedAdminKey;
+const cleanAdminCookie = adminCookie ? decodeURIComponent(adminCookie) : undefined;
+const isAdminAuthorized = (session && session.rol === 'admin') || cleanAdminCookie === expectedAdminKey || adminCookie === expectedAdminKey;
 
 const db = getDbFromContext(Astro);
 let students: any[] = [];
 let consultas: any[] = [];
-const liveManager = getSesionEnVivoManagerFromContext(Astro);
-let liveConfig = await liveManager.getConfiguredSession();
-let liveStatus = await liveManager.getSessionStatus();
-let routes = getAllRoutes();
+
+let liveConfig = DEFAULT_LIVE_SESSION;
+let liveStatus = getUpcomingLiveSession();
+try {
+  const liveManager = getSesionEnVivoManagerFromContext(Astro);
+  liveConfig = await liveManager.getConfiguredSession();
+  liveStatus = await liveManager.getSessionStatus();
+} catch (err) {
+  console.warn('Error cargando configuración de sesión en vivo:', err);
+}
+
+let routes: any[] = [];
+try {
+  routes = getAllRoutes();
+} catch (err) {
+  console.warn('Error cargando rutas en admin:', err);
+}
+if (!Array.isArray(routes)) routes = [];
 
 if (isAdminAuthorized) {
   try {
-    students = await getAllStudents(db, 200);
-    consultas = await getAllConsultas(db, 200);
+    const fetchedStudents = await getAllStudents(db, 200);
+    students = Array.isArray(fetchedStudents) ? fetchedStudents : [];
+    const fetchedConsultas = await getAllConsultas(db, 200);
+    consultas = Array.isArray(fetchedConsultas) ? fetchedConsultas : [];
   } catch (err) {
     console.error('Error fetching admin data:', err);
+    students = [];
+    consultas = [];
   }
 }
 
@@ -104,7 +123,7 @@ const tutorEmail = env.TUTOR_EMAIL || 'tutor@lddigital.co';
               />
             </div>
 
-            <div id="unlock-error" class="hidden p-3 rounded-xl bg-rose-950/80 border border-rose-500/60 text-rose-300 text-xs">
+            <div id="unlock-error" class={adminCookie && !isAdminAuthorized ? 'p-3 rounded-xl bg-rose-950/80 border border-rose-500/60 text-rose-300 text-xs' : 'hidden p-3 rounded-xl bg-rose-950/80 border border-rose-500/60 text-rose-300 text-xs'}>
               Clave de administración incorrecta. Por favor intente nuevamente.
             </div>
 
@@ -516,7 +535,8 @@ const tutorEmail = env.TUTOR_EMAIL || 'tutor@lddigital.co';
 
         // Guardar en cookie por 7 días
         const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString();
-        document.cookie = 'lms_admin_key=' + encodeURIComponent(key) + '; path=/; expires=' + expires + '; SameSite=Lax';
+        const isSecure = window.location.protocol === 'https:';
+        document.cookie = 'lms_admin_key=' + encodeURIComponent(key) + '; path=/; expires=' + expires + '; SameSite=Lax' + (isSecure ? '; Secure' : '');
         
         window.location.reload();
       });
@@ -526,7 +546,8 @@ const tutorEmail = env.TUTOR_EMAIL || 'tutor@lddigital.co';
     const btnLogout = document.getElementById('btn-admin-logout');
     if (btnLogout) {
       btnLogout.addEventListener('click', function() {
-        document.cookie = 'lms_admin_key=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+        const isSecure = window.location.protocol === 'https:';
+        document.cookie = 'lms_admin_key=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax' + (isSecure ? '; Secure' : '');
         window.location.reload();
       });
     }

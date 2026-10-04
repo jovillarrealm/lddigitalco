@@ -5,48 +5,72 @@ import type { D1Database } from '../db/types';
 
 let devDb: D1Database | null = null;
 
+function createStubD1(): D1Database {
+  return {
+    prepare: () => ({
+      bind: () => ({
+        first: async () => null,
+        run: async () => ({ results: [], success: true, meta: { duration: 0, changes: 0, last_row_id: 0 } }),
+        all: async () => ({ results: [], success: true, meta: { duration: 0, changes: 0, last_row_id: 0 } }),
+        raw: async () => [],
+      } as any),
+      first: async () => null,
+      run: async () => ({ results: [], success: true, meta: { duration: 0, changes: 0, last_row_id: 0 } }),
+      all: async () => ({ results: [], success: true, meta: { duration: 0, changes: 0, last_row_id: 0 } }),
+      raw: async () => [],
+    } as any),
+    dump: async () => new ArrayBuffer(0),
+    batch: async () => [],
+    exec: async () => ({ count: 0, duration: 0 }),
+  };
+}
+
 function getDevDb(): D1Database {
   if (!devDb) {
-    devDb = createInMemoryD1();
-    // Default schema creation for development
-    devDb.exec(`
-      CREATE TABLE IF NOT EXISTS estudiantes (
-        id TEXT PRIMARY KEY,
-        email TEXT UNIQUE NOT NULL,
-        nombre TEXT NOT NULL,
-        rol TEXT NOT NULL DEFAULT 'estudiante',
-        nivel_acceso TEXT NOT NULL DEFAULT 'ruta_abierta',
-        creado_en TEXT NOT NULL
-      );
-      CREATE INDEX IF NOT EXISTS idx_estudiantes_email ON estudiantes(email);
+    try {
+      devDb = createInMemoryD1();
+      // Default schema creation for development
+      devDb.exec(`
+        CREATE TABLE IF NOT EXISTS estudiantes (
+          id TEXT PRIMARY KEY,
+          email TEXT UNIQUE NOT NULL,
+          nombre TEXT NOT NULL,
+          rol TEXT NOT NULL DEFAULT 'estudiante',
+          nivel_acceso TEXT NOT NULL DEFAULT 'ruta_abierta',
+          creado_en TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_estudiantes_email ON estudiantes(email);
 
-      CREATE TABLE IF NOT EXISTS progreso (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        estudiante_id TEXT NOT NULL,
-        microcapsula_slug TEXT NOT NULL,
-        completado_en TEXT NOT NULL,
-        FOREIGN KEY (estudiante_id) REFERENCES estudiantes(id) ON DELETE CASCADE,
-        UNIQUE (estudiante_id, microcapsula_slug)
-      );
-      CREATE INDEX IF NOT EXISTS idx_progreso_estudiante ON progreso(estudiante_id);
-      CREATE INDEX IF NOT EXISTS idx_progreso_slug ON progreso(microcapsula_slug);
+        CREATE TABLE IF NOT EXISTS progreso (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          estudiante_id TEXT NOT NULL,
+          microcapsula_slug TEXT NOT NULL,
+          completado_en TEXT NOT NULL,
+          FOREIGN KEY (estudiante_id) REFERENCES estudiantes(id) ON DELETE CASCADE,
+          UNIQUE (estudiante_id, microcapsula_slug)
+        );
+        CREATE INDEX IF NOT EXISTS idx_progreso_estudiante ON progreso(estudiante_id);
+        CREATE INDEX IF NOT EXISTS idx_progreso_slug ON progreso(microcapsula_slug);
 
-      CREATE TABLE IF NOT EXISTS consultas (
-        id TEXT PRIMARY KEY,
-        estudiante_id TEXT NOT NULL,
-        microcapsula_slug TEXT NOT NULL,
-        mensaje TEXT NOT NULL,
-        estado TEXT NOT NULL DEFAULT 'pendiente',
-        creado_en TEXT NOT NULL,
-        FOREIGN KEY (estudiante_id) REFERENCES estudiantes(id) ON DELETE CASCADE
-      );
-      CREATE TABLE IF NOT EXISTS configuracion (
-        clave TEXT PRIMARY KEY,
-        valor TEXT NOT NULL,
-        actualizado_en TEXT NOT NULL
-      );
-    `);
-
+        CREATE TABLE IF NOT EXISTS consultas (
+          id TEXT PRIMARY KEY,
+          estudiante_id TEXT NOT NULL,
+          microcapsula_slug TEXT NOT NULL,
+          mensaje TEXT NOT NULL,
+          estado TEXT NOT NULL DEFAULT 'pendiente',
+          creado_en TEXT NOT NULL,
+          FOREIGN KEY (estudiante_id) REFERENCES estudiantes(id) ON DELETE CASCADE
+        );
+        CREATE TABLE IF NOT EXISTS configuracion (
+          clave TEXT PRIMARY KEY,
+          valor TEXT NOT NULL,
+          actualizado_en TEXT NOT NULL
+        );
+      `);
+    } catch {
+      // Fallback seguro en Cloudflare Workers si DB no está vinculado
+      devDb = createStubD1();
+    }
   }
   return devDb;
 }
