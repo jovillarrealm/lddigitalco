@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
-import { getAuthServiceFromContext } from '../../../lib/auth';
+import { getAuthServiceFromContext, getDbFromContext } from '../../../lib/auth';
+import { getStudentById } from '../../../lib/db/estudiantes';
 
 export const prerender = false;
 
@@ -21,15 +22,19 @@ export const GET: APIRoute = async (context) => {
     );
   }
 
+  const db = getDbFromContext(context);
+  const freshStudent = await getStudentById(db, session.id);
+  const student = freshStudent || session;
+
   return new Response(
     JSON.stringify({
       authenticated: true,
       student: {
-        id: session.id,
-        email: session.email,
-        nombre: session.nombre,
-        rol: session.rol,
-        nivel_acceso: session.nivel_acceso,
+        id: student.id,
+        email: student.email,
+        nombre: student.nombre,
+        rol: student.rol,
+        nivel_acceso: student.nivel_acceso,
       },
     }),
     {
@@ -38,3 +43,4 @@ export const GET: APIRoute = async (context) => {
     }
   );
 };
+

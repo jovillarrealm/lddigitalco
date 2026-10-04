@@ -3,31 +3,52 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { getAuthServiceFromContext, getDbFromContext } from '../lib/auth';
 import { getRouteBySlug, calculateRouteProgress } from '../lib/courses';
 import { getProgressByStudent } from '../lib/db/progreso';
+import { getStudentById } from '../lib/db/estudiantes';
+import { getUpcomingLiveSession } from '../lib/courses/live-session';
 
 const authService = getAuthServiceFromContext(Astro);
-const student = await authService.getSessionFromRequest(Astro.request);
+const sessionStudent = await authService.getSessionFromRequest(Astro.request);
 
 const loginSuccess = Astro.url.searchParams.get('login') === 'success';
 const authError = Astro.url.searchParams.get('error');
 
-let route = null;
+let student: any = null;
+let isEnrolledFull = false;
+let route: any = null;
 let completedSlugs: string[] = [];
 let progressStats = { total: 0, completadas: 0, porcentaje: 0 };
-let currentCapsule = null;
+let currentCapsule: any = null;
+let routeAccessBlocked = false;
+const liveSessionInfo = getUpcomingLiveSession();
 
-if (student) {
+if (sessionStudent) {
   const db = getDbFromContext(Astro);
+  const freshStudent = await getStudentById(db, sessionStudent.id);
+  student = freshStudent || sessionStudent;
+  isEnrolledFull =
+    student.nivel_acceso === 'inscripcion_completa' ||
+    student.rol === 'admin' ||
+    student.rol === 'tutor';
+
   const routeSlug = Astro.url.searchParams.get('ruta') || 'ciberseguridad-whatsapp';
-  route = getRouteBySlug(routeSlug) || getRouteBySlug('ciberseguridad-whatsapp')!;
+  const targetRoute = getRouteBySlug(routeSlug) || getRouteBySlug('ciberseguridad-whatsapp')!;
+
+  if (targetRoute.nivel === 'inscripcion_completa' && !isEnrolledFull) {
+    routeAccessBlocked = true;
+    route = getRouteBySlug('ciberseguridad-whatsapp')!;
+  } else {
+    route = targetRoute;
+  }
 
   const progressRecords = await getProgressByStudent(db, student.id);
   completedSlugs = progressRecords.map((p) => p.microcapsula_slug);
   progressStats = calculateRouteProgress(completedSlugs, route);
 
-  const firstUnfinishedIdx = route.microcapsulas.findIndex((c) => !completedSlugs.includes(c.slug));
+  const firstUnfinishedIdx = route.microcapsulas.findIndex((c: any) => !completedSlugs.includes(c.slug));
   const activeIdx = firstUnfinishedIdx !== -1 ? firstUnfinishedIdx : 0;
   currentCapsule = route.microcapsulas[activeIdx];
 }
+
 ---
 
 <BaseLayout title="Portal de Alumnos — LDDIGITALCO" activeNav="alumnos">
@@ -53,6 +74,29 @@ if (student) {
         </div>
       </div>
     )}
+
+    {routeAccessBlocked && (
+      <div role="alert" class="mb-6 p-5 rounded-2xl bg-cyan-950/80 border-2 border-cyan-400 text-white flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <span class="text-3xl">🔒</span>
+          <div>
+            <h3 class="font-bold text-cyan-300">Ruta protegida para Inscripción Completa</h3>
+            <p class="text-sm text-slate-200">
+              La ruta solicitada requiere Inscripción Completa. Mientras tanto, puede seguir aprendiendo en su <strong>Ruta Abierta</strong> sin interrupciones.
+            </p>
+          </div>
+        </div>
+        <a
+          href="https://wa.me/573000000000?text=Hola,%20quisiera%20solicitar%20la%20Inscripción%20Completa%20para%20desbloquear%20todas%20las%20rutas."
+          target="_blank"
+          rel="noopener noreferrer"
+          class="shrink-0 px-4 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs shadow-md transition-colors"
+        >
+          Mejorar mi Acceso
+        </a>
+      </div>
+    )}
+
 
     {!student && (
       <section aria-labelledby="login-heading" class="max-w-2xl mx-auto my-8">
@@ -307,20 +351,110 @@ if (student) {
 
           <div class="space-y-6">
             
-            <div class="glass-card rounded-3xl p-6 border-2 border-emerald-400 glow-green bg-gradient-to-b from-[#0c241a] to-slate-900 shadow-xl">
-              <div class="flex items-center justify-between mb-3">
-                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-400 text-slate-950">Sesión en Vivo</span>
-                <span class="text-xs text-emerald-400 font-mono font-bold">HOY 18:00</span>
+            {isEnrolledFull ? (
+              <div
+                id="live-session-container"
+                class="glass-card rounded-3xl p-6 border-2 border-emerald-400 glow-green bg-gradient-to-b from-[#0c241a] to-slate-900 shadow-xl"
+              >
+                <div class="flex items-center justify-between mb-3">
+                  <span class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-400 text-slate-950">
+                    Sesión en Vivo
+                  </span>
+                  {liveSessionInfo.status === 'active' ? (
+                    <span id="live-status-pill" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-400 text-slate-950 animate-pulse">
+                      ● En Vivo Ahora
+                    </span>
+                  ) : liveSessionInfo.status === 'upcoming' ? (
+                    <span id="live-status-pill" class="text-xs text-emerald-400 font-mono font-bold">
+                      Inicia en {liveSessionInfo.startsInMinutes} min
+                    </span>
+                  ) : (
+                    <span id="live-status-pill" class="text-xs text-slate-400 font-mono">
+                      Finalizada
+                    </span>
+                  )}
+                </div>
+
+                <h3 id="live-session-title" class="text-lg font-bold text-white font-tech">
+                  {liveSessionInfo.session.title}
+                </h3>
+                <p id="live-session-desc" class="text-slate-200 text-xs mt-1 mb-5">
+                  {liveSessionInfo.session.description}
+                </p>
+
+                {liveSessionInfo.status === 'active' ? (
+                  <div>
+                    <a
+                      id="live-join-btn"
+                      href={liveSessionInfo.session.meetUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="w-full min-h-[48px] py-4 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-sm shadow-lg shadow-emerald-500/30 transition-transform transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span class="text-xl">📹</span>
+                      <span>Entrar a mi Clase en 1 Clic</span>
+                    </a>
+                    <p id="live-session-help-msg" class="text-emerald-300 text-xs text-center mt-2 font-medium">
+                      ¡La clase está activa en este momento! Haga clic para ingresar.
+                    </p>
+                  </div>
+                ) : liveSessionInfo.status === 'upcoming' ? (
+                  <div>
+                    <button
+                      id="live-join-btn"
+                      type="button"
+                      disabled
+                      class="w-full min-h-[48px] py-4 rounded-xl bg-slate-800 text-slate-400 font-bold text-sm border border-slate-700 flex items-center justify-center gap-2 cursor-not-allowed opacity-80"
+                    >
+                      <span class="text-xl">⏳</span>
+                      <span>Clase en 1 Clic (se activa 15 min antes)</span>
+                    </button>
+                    <p id="live-session-help-msg" class="text-slate-400 text-xs text-center mt-2 leading-relaxed">
+                      El botón de ingreso se activará automáticamente 15 minutos antes de la clase.
+                    </p>
+                  </div>
+                ) : (
+                  <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-center">
+                    <span class="text-2xl block mb-1">🏁</span>
+                    <p class="text-slate-200 text-xs font-semibold mb-1">Este taller en directo ha finalizado.</p>
+                    <p id="live-session-help-msg" class="text-emerald-400 text-xs">
+                      Próxima sesión en vivo: <strong>{liveSessionInfo.session.nextScheduledAt || 'Próxima semana'}</strong>
+                    </p>
+                  </div>
+                )}
               </div>
+            ) : (
+              <div
+                id="live-upgrade-card"
+                class="glass-card rounded-3xl p-6 border-2 border-cyan-500/50 glow-blue bg-gradient-to-b from-[#091b29] to-slate-900 shadow-xl relative overflow-hidden"
+              >
+                <div class="flex items-center justify-between mb-3">
+                  <span class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-cyan-950 text-cyan-400 border border-cyan-500/30">
+                    Talleres en Directo
+                  </span>
+                  <span class="text-xs text-cyan-400 font-mono font-bold">Acompañamiento VIP</span>
+                </div>
 
-              <h3 class="text-lg font-bold text-white font-tech">Taller en Directo: Práctica de Celular</h3>
-              <p class="text-slate-200 text-xs mt-1 mb-5">Conéctese con sus profesores para practicar juntos y resolver dudas en tiempo real.</p>
+                <h3 class="text-lg font-bold text-white font-tech">
+                  Clases en Vivo y Tutor Personal
+                </h3>
+                <p class="text-slate-200 text-xs mt-2 mb-5 leading-relaxed">
+                  Pase a la <strong>Inscripción Completa</strong> para desbloquear los talleres grupales en vivo con su tutor, resolver dudas en tiempo real y recibir acompañamiento personalizado paso a paso.
+                </p>
 
-              <button onclick="alert('Abriendo Google Meet / Zoom de la clase en vivo... ¡Bienvenido!')" class="w-full min-h-[48px] py-4 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-sm shadow-lg shadow-emerald-500/30 transition-transform transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer">
-                <span class="text-xl">📹</span>
-                <span>Entrar a mi Clase en 1 Clic</span>
-              </button>
-            </div>
+                <a
+                  href="https://wa.me/573000000000?text=Hola,%20tengo%20Ruta%20Abierta%20y%20deseo%20dar%20el%20paso%20a%20la%20Inscripción%20Completa."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="w-full min-h-[48px] py-3.5 px-4 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-black text-sm shadow-lg shadow-cyan-500/20 transition-transform transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>🚀</span>
+                  <span>Solicitar Inscripción Completa</span>
+                </a>
+              </div>
+            )}
+
+
 
             <div class="glass-card rounded-2xl p-6 border border-slate-800">
               <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-4 font-tech">Microcápsulas de la Ruta</h4>
@@ -516,7 +650,54 @@ if (student) {
         }
       });
     }
+
+    // Live session auto-refresh for active sessions (Issue #6)
+    const liveContainer = document.getElementById('live-session-container');
+    if (liveContainer) {
+      async function refreshLiveSession() {
+        try {
+          const res = await fetch('/api/live-session');
+          if (!res.ok) return;
+          const data = await res.json();
+          if (!data.success || !data.canAccess) return;
+
+          const pill = document.getElementById('live-status-pill');
+          const helpMsg = document.getElementById('live-session-help-msg');
+          const joinBtn = document.getElementById('live-join-btn');
+
+          if (data.status === 'active' && data.meetUrl) {
+            if (pill) {
+              pill.className = 'px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-400 text-slate-950 animate-pulse';
+              pill.textContent = '● En Vivo Ahora';
+            }
+            if (helpMsg) {
+              helpMsg.className = 'text-emerald-300 text-xs text-center mt-2 font-medium';
+              helpMsg.textContent = '¡La clase está activa en este momento! Haga clic para ingresar.';
+            }
+            if (joinBtn && joinBtn.tagName === 'BUTTON') {
+              const a = document.createElement('a');
+              a.id = 'live-join-btn';
+              a.href = data.meetUrl;
+              a.target = '_blank';
+              a.rel = 'noopener noreferrer';
+              a.className = 'w-full min-h-[48px] py-4 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-sm shadow-lg shadow-emerald-500/30 transition-transform transform hover:scale-[1.02] flex items-center justify-center gap-2 cursor-pointer';
+              a.innerHTML = '<span class="text-xl">📹</span><span>Entrar a mi Clase en 1 Clic</span>';
+              joinBtn.parentNode?.replaceChild(a, joinBtn);
+            }
+          } else if (data.status === 'upcoming') {
+            if (pill && data.startsInMinutes > 0) {
+              pill.textContent = `Inicia en ${data.startsInMinutes} min`;
+            }
+          }
+        } catch {
+          // Ignore network errors in polling
+        }
+      }
+
+      setInterval(refreshLiveSession, 30000);
+    }
   </script>
+
 
   <script is:inline src="/js/offline-sync.js"></script>
   <script is:inline src="/js/lms-player.js"></script>

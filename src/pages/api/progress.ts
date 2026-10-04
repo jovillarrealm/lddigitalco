@@ -5,11 +5,13 @@ import {
   unmarkComplete,
   getProgressByStudent,
 } from '../../lib/db/progreso';
+import { getStudentById } from '../../lib/db/estudiantes';
 import {
   getRouteBySlug,
   findCapsuleBySlug,
   calculateRouteProgress,
 } from '../../lib/courses';
+
 
 export const prerender = false;
 
@@ -32,6 +34,9 @@ export const GET: APIRoute = async (context) => {
   }
 
   const db = getDbFromContext(context);
+  const freshStudent = await getStudentById(db, session.id);
+  const studentLevel = freshStudent?.nivel_acceso || session.nivel_acceso;
+
   const rutaSlug = url.searchParams.get('ruta') || 'ciberseguridad-whatsapp';
   const route = getRouteBySlug(rutaSlug);
 
@@ -47,6 +52,27 @@ export const GET: APIRoute = async (context) => {
       }
     );
   }
+
+  // Tier access control: block ruta_abierta from inscripcion_completa
+  if (
+    route.nivel === 'inscripcion_completa' &&
+    studentLevel === 'ruta_abierta' &&
+    session.rol !== 'admin' &&
+    session.rol !== 'tutor'
+  ) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'requires_inscripcion_completa',
+        message: 'Esta ruta requiere Inscripción Completa.',
+      }),
+      {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  }
+
 
   const progressRecords = await getProgressByStudent(db, session.id);
   const completedSlugs = progressRecords.map((p) => p.microcapsula_slug);
@@ -125,6 +151,35 @@ export const POST: APIRoute = async (context) => {
 
   const normalizedSlug = microcapsulaSlug.trim();
   const db = getDbFromContext(context);
+  const freshStudent = await getStudentById(db, session.id);
+  const studentLevel = freshStudent?.nivel_acceso || session.nivel_acceso;
+
+  // Determine route to validate access and return updated progress
+  let targetRoute = rutaSlug ? getRouteBySlug(rutaSlug) : undefined;
+  if (!targetRoute) {
+    const found = findCapsuleBySlug(normalizedSlug);
+    targetRoute = found ? found.route : getRouteBySlug('ciberseguridad-whatsapp')!;
+  }
+
+  // Tier access control: block ruta_abierta from inscripcion_completa
+  if (
+    targetRoute.nivel === 'inscripcion_completa' &&
+    studentLevel === 'ruta_abierta' &&
+    session.rol !== 'admin' &&
+    session.rol !== 'tutor'
+  ) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'requires_inscripcion_completa',
+        message: 'Esta ruta requiere Inscripción Completa.',
+      }),
+      {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  }
 
   if (completado !== false) {
     await markComplete(db, session.id, normalizedSlug);
@@ -132,12 +187,6 @@ export const POST: APIRoute = async (context) => {
     await unmarkComplete(db, session.id, normalizedSlug);
   }
 
-  // Determine route to return updated progress
-  let targetRoute = rutaSlug ? getRouteBySlug(rutaSlug) : undefined;
-  if (!targetRoute) {
-    const found = findCapsuleBySlug(normalizedSlug);
-    targetRoute = found ? found.route : getRouteBySlug('ciberseguridad-whatsapp')!;
-  }
 
   const progressRecords = await getProgressByStudent(db, session.id);
   const completedSlugs = progressRecords.map((p) => p.microcapsula_slug);

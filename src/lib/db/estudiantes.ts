@@ -60,3 +60,17 @@ export async function findOrCreateStudent(
     creado_en: creadoEn,
   };
 }
+
+export async function upgradeStudentAccess(
+  db: D1Database,
+  email: string,
+  nivelAcceso: 'ruta_abierta' | 'inscripcion_completa'
+): Promise<Estudiante | null> {
+  const normalizedEmail = email.trim().toLowerCase();
+  await db
+    .prepare('UPDATE estudiantes SET nivel_acceso = ? WHERE email = ?')
+    .bind(nivelAcceso, normalizedEmail)
+    .run();
+  return getStudentByEmail(db, normalizedEmail);
+}
+
