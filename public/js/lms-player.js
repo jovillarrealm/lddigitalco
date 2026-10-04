@@ -9,6 +9,7 @@
     route: null,
     currentIndex: 0,
     completedSlugs: new Set(),
+    isEnrolledFull: false,
     ytPlayer: null,
     isYtReady: false,
     isSaving: false,
@@ -37,6 +38,14 @@
         if (parsed.route) state.route = parsed.route;
         if (parsed.completedSlugs && Array.isArray(parsed.completedSlugs)) {
           state.completedSlugs = new Set(parsed.completedSlugs);
+        }
+        if (typeof parsed.isEnrolledFull === 'boolean') {
+          state.isEnrolledFull = parsed.isEnrolledFull;
+        } else if (parsed.student) {
+          state.isEnrolledFull =
+            parsed.student.nivel_acceso === 'inscripcion_completa' ||
+            parsed.student.rol === 'admin' ||
+            parsed.student.rol === 'tutor';
         }
       } catch (err) {
         console.error('Error al parsear lms-initial-data:', err);
@@ -503,8 +512,22 @@
 
   /**
    * Abre el modal «Tengo una Duda» prellenando el contexto de la cápsula
+   * Si el estudiante tiene Ruta Abierta, abre el modal informativo invitando a Inscripción Completa.
    */
   function openDudaModal() {
+    if (!state.isEnrolledFull) {
+      const upgradeModal = document.getElementById('duda-upgrade-modal');
+      if (upgradeModal) {
+        upgradeModal.classList.remove('hidden');
+        const cancelBtn = document.getElementById('duda-upgrade-cancel-btn');
+        if (cancelBtn) cancelBtn.focus();
+        showToast('Las consultas formativas con el tutor requieren Inscripción Completa.');
+        return;
+      }
+      showToast('Las consultas formativas con el tutor requieren Inscripción Completa.');
+      return;
+    }
+
     const modal = document.getElementById('duda-modal');
     if (!modal) return;
 
@@ -531,12 +554,14 @@
   }
 
   /**
-   * Cierra el modal «Tengo una Duda»
+   * Cierra el modal «Tengo una Duda» o el modal de mejora
    */
   function closeDudaModal() {
     const modal = document.getElementById('duda-modal');
-    if (!modal) return;
-    modal.classList.add('hidden');
+    if (modal) modal.classList.add('hidden');
+
+    const upgradeModal = document.getElementById('duda-upgrade-modal');
+    if (upgradeModal) upgradeModal.classList.add('hidden');
 
     const dudaBtn = document.getElementById('doubt-btn');
     if (dudaBtn) {
@@ -553,7 +578,7 @@
       dudaBtn.addEventListener('click', openDudaModal);
     }
 
-    const closeBtn = document.getElementById('duda-close-btn');
+    const closeBtn = document.getElementById('modal-close-btn') || document.getElementById('duda-close-btn');
     if (closeBtn) {
       closeBtn.addEventListener('click', closeDudaModal);
     }
@@ -561,6 +586,16 @@
     const cancelBtn = document.getElementById('duda-cancel-btn');
     if (cancelBtn) {
       cancelBtn.addEventListener('click', closeDudaModal);
+    }
+
+    const upgradeCloseBtn = document.getElementById('duda-upgrade-close-btn');
+    if (upgradeCloseBtn) {
+      upgradeCloseBtn.addEventListener('click', closeDudaModal);
+    }
+
+    const upgradeCancelBtn = document.getElementById('duda-upgrade-cancel-btn');
+    if (upgradeCancelBtn) {
+      upgradeCancelBtn.addEventListener('click', closeDudaModal);
     }
 
     const modal = document.getElementById('duda-modal');
@@ -572,9 +607,23 @@
       });
     }
 
+    const upgradeModal = document.getElementById('duda-upgrade-modal');
+    if (upgradeModal) {
+      upgradeModal.addEventListener('click', (e) => {
+        if (e.target === upgradeModal) {
+          closeDudaModal();
+        }
+      });
+    }
+
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
-        closeDudaModal();
+      if (e.key === 'Escape') {
+        if (modal && !modal.classList.contains('hidden')) {
+          closeDudaModal();
+        }
+        if (upgradeModal && !upgradeModal.classList.contains('hidden')) {
+          closeDudaModal();
+        }
       }
     });
 
@@ -634,6 +683,23 @@
             }
             if (form) form.reset();
             showToast('¡Listo! Tu duda ha sido recibida por tu tutor de LDDIGITALCO.');
+          } else if (res.status === 403 || data.error === 'requires_inscripcion_completa') {
+            if (feedback) {
+              feedback.className = 'p-5 rounded-2xl bg-amber-950/90 border-2 border-amber-400 text-white text-sm sm:text-base leading-relaxed';
+              feedback.innerHTML = `
+                <div class="flex items-start gap-3">
+                  <span class="text-3xl">🔒</span>
+                  <div>
+                    <strong class="text-amber-300 block text-base font-bold mb-1">Inscripción Completa Requerida</strong>
+                    <p class="text-slate-200 mb-3">${data.message || 'El envío de consultas formativas directas al tutor requiere Inscripción Completa.'}</p>
+                    <a href="https://wa.me/573000000000?text=Hola,%20quisiera%20solicitar%20la%20Inscripción%20Completa%20para%20consultas%20con%20tutor." target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs">
+                      <span>💬</span> Solicitar Inscripción Completa
+                    </a>
+                  </div>
+                </div>
+              `;
+            }
+            showToast('El envío de consultas al tutor requiere Inscripción Completa.');
           } else {
             if (feedback) {
               feedback.className = 'p-4 rounded-xl bg-amber-950/80 border border-amber-500 text-amber-200 text-sm font-medium';

@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
-import { getAuthServiceFromContext, getDbFromContext, getEnvFromContext } from '../../lib/auth';
+import { getAuthServiceFromContext, getDbFromContext, getEnvFromContext, hasFullAccess } from '../../lib/auth';
+import { getStudentById } from '../../lib/db/estudiantes';
 import { getEmailService } from '../../lib/email';
 import { createConsulta } from '../../lib/db/consultas';
 import { findCapsuleBySlug } from '../../lib/courses';
@@ -19,6 +20,24 @@ export const POST: APIRoute = async (context) => {
       }),
       {
         status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  }
+
+  const db = getDbFromContext(context);
+  const freshStudent = await getStudentById(db, session.id);
+  const currentAccess = freshStudent || session;
+
+  if (!hasFullAccess(currentAccess)) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'requires_inscripcion_completa',
+        message: 'El envío de consultas formativas directas al tutor requiere Inscripción Completa.',
+      }),
+      {
+        status: 403,
         headers: { 'Content-Type': 'application/json' },
       }
     );
@@ -70,7 +89,6 @@ export const POST: APIRoute = async (context) => {
 
   const normalizedSlug = microcapsulaSlug.trim();
   const normalizedMensaje = mensaje.trim();
-  const db = getDbFromContext(context);
 
   // 1. Guardar consulta en la base de datos D1
   const consulta = await createConsulta(db, {

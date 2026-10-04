@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getAuthServiceFromContext, getDbFromContext } from '../../../lib/auth';
+import { getAuthServiceFromContext, getDbFromContext, getEnvFromContext } from '../../../lib/auth';
 import { upgradeStudentAccess, getStudentByEmail } from '../../../lib/db/estudiantes';
 
 export const prerender = false;
@@ -8,6 +8,26 @@ export const POST: APIRoute = async (context) => {
   const { request } = context;
   const db = getDbFromContext(context);
   const authService = getAuthServiceFromContext(context);
+  const env = getEnvFromContext(context);
+
+  const session = await authService.getSessionFromRequest(request);
+  const adminKeyHeader = request.headers.get('x-admin-key');
+  const expectedAdminKey = env.ADMIN_KEY || 'dev-admin-secret';
+
+  const isAuthorized =
+    (session && session.rol === 'admin') ||
+    (adminKeyHeader && adminKeyHeader === expectedAdminKey);
+
+  if (!isAuthorized) {
+    const status = (!session && !adminKeyHeader) ? 401 : 403;
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'No autorizado. Se requieren credenciales de administrador para actualizar niveles de acceso.',
+      }),
+      { status, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
 
   let body: any = {};
   try {

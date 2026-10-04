@@ -10,7 +10,7 @@ Bienvenido al repositorio oficial del proyecto **LDDIGITALCO**.
   * *Asesoría Corporativa*
   * *Plan Marca Personal*
 * **`senior.html`**: Portal dedicado al **Programa +50** con diseño de alta legibilidad, ciberseguridad, prevención de estafas, manejo de celulares/PC e IA práctica.
-* **`alumnos.html`**: Portal privado del estudiante (LMS) con reproductor de microcápsulas de 2-3 minutos y enlace directo a clases por Zoom/Meet en 1 clic.
+* **`src/pages/alumnos.astro` (`/alumnos`)**: Portal privado del estudiante (LMS) con reproductor de microcápsulas de 2-3 minutos y enlace directo a clases por Zoom/Meet en 1 clic.
 
 ---
 

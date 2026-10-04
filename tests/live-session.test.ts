@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   getLiveSessionStatus,
   getUpcomingLiveSession,
+  formatLiveSessionTime,
+  formatStartsIn,
   type LiveSession,
 } from '../src/lib/courses/live-session';
 import { createInMemoryD1 } from '../src/lib/db/d1-memory';
@@ -78,6 +80,51 @@ describe('Live Session Service and Banner (Issue #6)', () => {
     expect(defaultInfo.session.title).toBeDefined();
     expect(defaultInfo.session.meetUrl).toBeDefined();
     expect(['upcoming', 'active', 'completed']).toContain(defaultInfo.status);
+  });
+
+  it('formats humane date and time when class is days away (avoids raw large minutes)', () => {
+    // 3 days (4320 minutes) before Wednesday 2026-10-07 18:00 UTC -> Sunday 2026-10-04 18:00 UTC
+    const refTime = new Date('2026-10-04T18:00:00.000Z');
+    const info = getLiveSessionStatus(baseSession, refTime);
+
+    expect(info.status).toBe('upcoming');
+    expect(info.startsInMinutes).toBe(4320);
+    // startsInDisplay must NOT contain raw 4320 min
+    expect(info.startsInDisplay).not.toContain('4320');
+    expect(info.startsInDisplay).toContain('Miércoles, 7 de Octubre - 18:00');
+    expect(info.formattedTime).toContain('Miércoles, 7 de Octubre - 18:00');
+    expect(info.timeRemainingMessage).toContain('Miércoles, 7 de Octubre - 18:00');
+  });
+
+  it('displays "Inicia en X min" when within 60 minutes', () => {
+    const refTime = new Date(scheduledTime - 45 * 60 * 1000);
+    const info = getLiveSessionStatus(baseSession, refTime);
+
+    expect(info.status).toBe('upcoming');
+    expect(info.startsInMinutes).toBe(45);
+    expect(info.startsInDisplay).toBe('Inicia en 45 min');
+    expect(info.timeRemainingMessage).toContain('inicia en aprox. 45 minutos');
+  });
+
+  it('formats "Hoy 18:00" when scheduled for later today (>60 min)', () => {
+    // Scheduled for today at 18:00, reference time at 10:00 today
+    const refTime = new Date('2026-10-07T10:00:00.000Z');
+    const formatted = formatLiveSessionTime('2026-10-07T18:00:00.000Z', refTime);
+    expect(formatted).toBe('Hoy 18:00');
+  });
+
+  it('formats "Mañana 18:00" when scheduled for tomorrow', () => {
+    const refTime = new Date('2026-10-06T10:00:00.000Z');
+    const formatted = formatLiveSessionTime('2026-10-07T18:00:00.000Z', refTime);
+    expect(formatted).toBe('Mañana 18:00');
+  });
+
+  it('formats formatStartsIn display correctly', () => {
+    const iso = '2026-10-07T18:00:00.000Z';
+    const ref = new Date('2026-10-07T17:15:00.000Z');
+    expect(formatStartsIn(45, iso, ref)).toBe('Inicia en 45 min');
+    expect(formatStartsIn(0, iso, ref)).toBe('● En Vivo Ahora');
+    expect(formatStartsIn(120, iso, new Date('2026-10-07T16:00:00.000Z'))).toBe('Hoy 18:00');
   });
 
 

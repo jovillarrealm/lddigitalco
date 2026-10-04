@@ -300,7 +300,7 @@
     });
 
     // Delegación o asignación para el botón de cerrar banner
-    var closeBtn = document.getElementById('offline-banner-close');
+    var closeBtn = document.getElementById('banner-close') || document.getElementById('offline-banner-close');
     if (closeBtn) {
       closeBtn.addEventListener('click', hideBanner);
     }

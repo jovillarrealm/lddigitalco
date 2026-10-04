@@ -94,7 +94,7 @@ export const RUTAS_CATALOG: RutaAprendizaje[] = [
   {
     id: 'ruta-banca-movil-segura',
     slug: 'banca-movil-segura',
-    titulo: 'Banca Móvil Segura y Prevención de Fraudes Financieros',
+    titulo: 'Banca Móvil Segura y Trámites Digitales',
     descripcion:
       'Aprenda a realizar pagos, consultar saldos y gestionar su dinero desde el celular con total seguridad y sin riesgos.',
     nivel: 'inscripcion_completa',

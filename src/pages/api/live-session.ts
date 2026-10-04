@@ -50,6 +50,8 @@ export const GET: APIRoute = async (context) => {
       status: sessionInfo.status,
       canJoin: sessionInfo.canJoin,
       startsInMinutes: sessionInfo.startsInMinutes,
+      formattedTime: sessionInfo.formattedTime,
+      startsInDisplay: sessionInfo.startsInDisplay,
       timeRemainingMessage: sessionInfo.timeRemainingMessage,
       activeUntil: sessionInfo.activeUntil,
       tier,

@@ -256,7 +256,40 @@ describe('Tiered Access Control (Issue #6: Ruta Abierta vs. Inscripción Complet
       expect(dataUnlockedPost.progreso.completadas).toBe(1);
     });
 
-    it('POST /api/students/upgrade upgrades student access level via HTTP endpoint', async () => {
+    it('rejects POST /api/students/upgrade without admin authorization with 401', async () => {
+      const ctx = createMockContext(
+        `${origin}/api/students/upgrade`,
+        'POST',
+        {
+          email: 'alumno.endpoint@ejemplo.com',
+          nivelAcceso: 'inscripcion_completa',
+        }
+      );
+
+      const res = await handleUpgradeStudent(ctx);
+      expect(res.status).toBe(401);
+      const data = await res.json();
+      expect(data.success).toBe(false);
+    });
+
+    it('rejects POST /api/students/upgrade with invalid admin key with 403', async () => {
+      const ctx = createMockContext(
+        `${origin}/api/students/upgrade`,
+        'POST',
+        {
+          email: 'alumno.endpoint@ejemplo.com',
+          nivelAcceso: 'inscripcion_completa',
+        },
+        { 'x-admin-key': 'clave-incorrecta' }
+      );
+
+      const res = await handleUpgradeStudent(ctx);
+      expect(res.status).toBe(403);
+      const data = await res.json();
+      expect(data.success).toBe(false);
+    });
+
+    it('POST /api/students/upgrade upgrades student access level with x-admin-key header', async () => {
       await findOrCreateStudent(db, {
         email: 'alumno.endpoint@ejemplo.com',
         nombre: 'Alumno Endpoint',
@@ -269,7 +302,8 @@ describe('Tiered Access Control (Issue #6: Ruta Abierta vs. Inscripción Complet
         {
           email: 'alumno.endpoint@ejemplo.com',
           nivelAcceso: 'inscripcion_completa',
-        }
+        },
+        { 'x-admin-key': 'dev-admin-secret' }
       );
 
       const res = await handleUpgradeStudent(ctx);
@@ -281,6 +315,37 @@ describe('Tiered Access Control (Issue #6: Ruta Abierta vs. Inscripción Complet
       // Verify in DB
       const inDb = await getStudentByEmail(db, 'alumno.endpoint@ejemplo.com');
       expect(inDb?.nivel_acceso).toBe('inscripcion_completa');
+    });
+
+    it('POST /api/students/upgrade allows upgrade when session is admin', async () => {
+      await findOrCreateStudent(db, {
+        email: 'alumno.sesion@ejemplo.com',
+        nombre: 'Alumno Sesion',
+        nivel_acceso: 'ruta_abierta',
+      });
+
+      const adminUser = await findOrCreateStudent(db, {
+        email: 'admin.lms@lddigital.co',
+        nombre: 'Admin LMS',
+        rol: 'admin',
+      });
+      const adminToken = await createSessionToken(adminUser, secret);
+
+      const ctx = createMockContext(
+        `${origin}/api/students/upgrade`,
+        'POST',
+        {
+          email: 'alumno.sesion@ejemplo.com',
+          nivelAcceso: 'inscripcion_completa',
+        },
+        { cookie: `lms_session=${adminToken}` }
+      );
+
+      const res = await handleUpgradeStudent(ctx);
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.success).toBe(true);
+      expect(data.student.nivel_acceso).toBe('inscripcion_completa');
     });
   });
 });

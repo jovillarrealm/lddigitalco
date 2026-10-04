@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getAuthServiceFromContext, getDbFromContext } from '../lib/auth';
+import { getAuthServiceFromContext, getDbFromContext, hasFullAccess } from '../lib/auth';
 import { getRouteBySlug, calculateRouteProgress } from '../lib/courses';
 import { getProgressByStudent } from '../lib/db/progreso';
 import { getStudentById } from '../lib/db/estudiantes';
@@ -25,10 +25,7 @@ if (sessionStudent) {
   const db = getDbFromContext(Astro);
   const freshStudent = await getStudentById(db, sessionStudent.id);
   student = freshStudent || sessionStudent;
-  isEnrolledFull =
-    student.nivel_acceso === 'inscripcion_completa' ||
-    student.rol === 'admin' ||
-    student.rol === 'tutor';
+  isEnrolledFull = hasFullAccess(student);
 
   const routeSlug = Astro.url.searchParams.get('ruta') || 'ciberseguridad-whatsapp';
   const targetRoute = getRouteBySlug(routeSlug) || getRouteBySlug('ciberseguridad-whatsapp')!;
@@ -51,7 +48,7 @@ if (sessionStudent) {
 
 ---
 
-<BaseLayout title="Portal de Alumnos — LDDIGITALCO" activeNav="alumnos">
+<BaseLayout title="Portal del Estudiante — LDDIGITALCO" activeNav="alumnos">
   <!-- LMS Main Area -->
   <main class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex-1">
     
@@ -127,16 +124,16 @@ if (sessionStudent) {
                 autocomplete="email"
                 placeholder="ejemplo@correo.com"
                 aria-describedby="email-help"
-                class="w-full text-base sm:text-lg px-5 py-4 rounded-xl bg-slate-900 border-2 border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all"
+                class="w-full text-base sm:text-lg px-5 py-4 rounded-xl bg-slate-900 border-2 border-slate-700 text-white placeholder-slate-300 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all"
               />
-              <p id="email-help" class="text-xs sm:text-sm text-slate-400 mt-2">
+              <p id="email-help" class="text-xs sm:text-sm text-slate-300 mt-2">
                 Le enviaremos un enlace seguro directo a este correo.
               </p>
             </div>
 
             <div>
               <label for="student-name" class="block text-base font-semibold text-white mb-2">
-                Su Nombre <span class="text-slate-400 text-xs font-normal">(opcional)</span>
+                Su Nombre <span class="text-slate-300 text-xs font-normal">(opcional)</span>
               </label>
               <input
                 type="text"
@@ -144,7 +141,7 @@ if (sessionStudent) {
                 name="nombre"
                 autocomplete="name"
                 placeholder="Ej. María o Carlos"
-                class="w-full text-base sm:text-lg px-5 py-4 rounded-xl bg-slate-900 border-2 border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all"
+                class="w-full text-base sm:text-lg px-5 py-4 rounded-xl bg-slate-900 border-2 border-slate-700 text-white placeholder-slate-300 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all"
               />
             </div>
 
@@ -195,7 +192,7 @@ if (sessionStudent) {
             <h1 class="text-2xl font-bold font-tech text-white">
               Bienvenido, {student.nombre}
             </h1>
-            <p class="text-xs text-slate-400 mt-0.5">
+            <p class="text-xs text-slate-300 mt-0.5">
               Ruta actual: <span class="text-emerald-400 font-semibold">{route?.titulo || 'Ciberseguridad y Prevención de Estafas en WhatsApp'}</span>
             </p>
           </div>
@@ -203,7 +200,7 @@ if (sessionStudent) {
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div class="w-full sm:w-64">
               <div class="flex justify-between text-xs font-semibold mb-1.5">
-                <span class="text-slate-400">Progreso Formativo</span>
+                <span class="text-slate-300">Progreso Formativo</span>
                 <span id="progress-text" class="text-emerald-400 font-bold">{progressStats.porcentaje}% Completado ({progressStats.completadas} de {progressStats.total})</span>
               </div>
               <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700" role="progressbar" aria-valuenow={progressStats.porcentaje} aria-valuemin="0" aria-valuemax="100">
@@ -214,7 +211,8 @@ if (sessionStudent) {
             <form action="/api/auth/logout" method="POST">
               <button
                 type="submit"
-                class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                id="btn-logout"
+                class="min-h-[48px] min-w-[48px] px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
                 title="Cerrar sesión segura"
               >
                 <span>🚪</span> Salir
@@ -245,15 +243,142 @@ if (sessionStudent) {
               </div>
             </div>
             <button
-              id="offline-banner-close"
+              id="banner-close"
+              data-alias="offline-banner-close"
               type="button"
-              class="text-slate-400 hover:text-white p-2 rounded-lg text-lg transition-colors cursor-pointer shrink-0"
+              class="min-h-[48px] min-w-[48px] flex items-center justify-center text-slate-300 hover:text-white p-2 rounded-lg text-lg transition-colors cursor-pointer shrink-0"
               aria-label="Cerrar aviso informativo"
             >
               ✕
             </button>
           </div>
         </div>
+
+        <!-- Rutas de Aprendizaje Catalog Card Listing (ADR 0008 / Issue #6 & Spec) -->
+        <section aria-labelledby="rutas-catalog-heading" class="mb-8">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 id="rutas-catalog-heading" class="text-xl sm:text-2xl font-bold font-tech text-white flex items-center gap-2">
+                <span>🧭</span> Tus Rutas de Aprendizaje
+              </h2>
+              <p class="text-xs sm:text-sm text-slate-300 mt-1">
+                Explore y seleccione su ruta formativa. Todas las microcápsulas están diseñadas paso a paso.
+              </p>
+            </div>
+            {!isEnrolledFull && (
+              <a
+                href="https://wa.me/573000000000?text=Hola,%20quisiera%20solicitar%20la%20Inscripción%20Completa%20para%20desbloquear%20todas%20las%20rutas."
+                target="_blank"
+                rel="noopener noreferrer"
+                class="hidden sm:inline-flex items-center gap-1.5 min-h-[48px] px-4 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs shadow-md transition-colors"
+              >
+                <span>⭐</span> Mejorar a Inscripción Completa
+              </a>
+            )}
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-5">
+            <!-- Ruta Abierta: Ciberseguridad y Prevención de Estafas en WhatsApp -->
+            <div class={`glass-card rounded-2xl p-6 border-2 transition-all ${route?.slug === 'ciberseguridad-whatsapp' ? 'border-emerald-400 glow-green' : 'border-slate-800 hover:border-slate-700'}`}>
+              <div class="flex items-center justify-between gap-3 mb-3">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-950 text-emerald-400 border border-emerald-500/30">
+                  <span>🌿</span> Ruta Abierta (100% Accesible)
+                </span>
+                {route?.slug === 'ciberseguridad-whatsapp' ? (
+                  <span class="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                    <span>●</span> Ruta Activa
+                  </span>
+                ) : (
+                  <span class="text-xs text-slate-300">Disponible</span>
+                )}
+              </div>
+
+              <h3 class="text-lg font-bold font-tech text-white mb-2">
+                Ruta Abierta: Ciberseguridad y Prevención de Estafas en WhatsApp
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-300 mb-4 leading-relaxed">
+                Aprenda a blindar su WhatsApp contra engaños, configurar su teléfono cómodamente y comunicarse con su familia sin miedos.
+              </p>
+
+              <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+                <span class="text-xs font-semibold text-slate-300">
+                  4 Microcápsulas • 10:50 min
+                </span>
+                <a
+                  href="/alumnos?ruta=ciberseguridad-whatsapp"
+                  class={`min-h-[48px] px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    route?.slug === 'ciberseguridad-whatsapp'
+                      ? 'bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20'
+                      : 'bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700'
+                  }`}
+                >
+                  {route?.slug === 'ciberseguridad-whatsapp' ? 'Continuar Aprendiendo →' : 'Ver Esta Ruta →'}
+                </a>
+              </div>
+            </div>
+
+            <!-- Ruta Avanzada: Banca Móvil Segura y Trámites Digitales -->
+            <div class={`glass-card rounded-2xl p-6 border-2 transition-all relative overflow-hidden ${
+              isEnrolledFull
+                ? (route?.slug === 'banca-movil-segura' ? 'border-cyan-400 glow-blue' : 'border-slate-800 hover:border-slate-700')
+                : 'border-slate-800/80 bg-slate-950/40 opacity-95'
+            }`}>
+              <div class="flex items-center justify-between gap-3 mb-3">
+                <span class={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                  isEnrolledFull
+                    ? 'bg-cyan-950 text-cyan-400 border border-cyan-500/30'
+                    : 'bg-amber-950 text-amber-300 border border-amber-500/40'
+                }`}>
+                  {isEnrolledFull ? (
+                    <><span>🚀</span> Ruta Avanzada (Desbloqueada)</>
+                  ) : (
+                    <><span>🔒</span> Inscripción Completa</>
+                  )}
+                </span>
+                {isEnrolledFull && route?.slug === 'banca-movil-segura' && (
+                  <span class="text-xs font-bold text-cyan-400 flex items-center gap-1">
+                    <span>●</span> Ruta Activa
+                  </span>
+                )}
+              </div>
+
+              <h3 class="text-lg font-bold font-tech text-white mb-2 flex items-center gap-2">
+                {!isEnrolledFull && <span class="text-amber-400">🔒</span>}
+                Ruta Avanzada: Banca Móvil Segura y Trámites Digitales
+              </h3>
+              <p class="text-xs sm:text-sm text-slate-300 mb-4 leading-relaxed">
+                Aprenda a realizar pagos, consultar saldos y gestionar su dinero desde el celular con total seguridad y sin riesgos.
+              </p>
+
+              <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+                <span class="text-xs font-semibold text-slate-300">
+                  3 Microcápsulas • 08:30 min
+                </span>
+                {isEnrolledFull ? (
+                  <a
+                    href="/alumnos?ruta=banca-movil-segura"
+                    class={`min-h-[48px] px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      route?.slug === 'banca-movil-segura'
+                        ? 'bg-cyan-400 text-slate-950 shadow-md shadow-cyan-500/20'
+                        : 'bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700'
+                    }`}
+                  >
+                    {route?.slug === 'banca-movil-segura' ? 'Continuar Aprendiendo →' : 'Ver Esta Ruta →'}
+                  </a>
+                ) : (
+                  <a
+                    href="https://wa.me/573000000000?text=Hola,%20quisiera%20solicitar%20la%20Inscripción%20Completa%20para%20desbloquear%20la%20Ruta%20de%20Banca%20Móvil%20Segura."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="min-h-[48px] px-5 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <span>🔒</span> Desbloquear con Inscripción Completa
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
 
         <div class="grid lg:grid-cols-3 gap-8">
           
@@ -290,7 +415,7 @@ if (sessionStudent) {
                 <h2 id="lesson-title" class="text-lg sm:text-2xl font-bold text-white font-tech">
                   {currentCapsule?.titulo}
                 </h2>
-                <p id="lesson-duration" class="text-xs sm:text-sm text-slate-400 mt-1">
+                <p id="lesson-duration" class="text-xs sm:text-sm text-slate-300 mt-1">
                   Duración: {currentCapsule?.duracion} • Explicado paso a paso
                 </p>
               </div>
@@ -366,10 +491,10 @@ if (sessionStudent) {
                     </span>
                   ) : liveSessionInfo.status === 'upcoming' ? (
                     <span id="live-status-pill" class="text-xs text-emerald-400 font-mono font-bold">
-                      Inicia en {liveSessionInfo.startsInMinutes} min
+                      {liveSessionInfo.startsInDisplay}
                     </span>
                   ) : (
-                    <span id="live-status-pill" class="text-xs text-slate-400 font-mono">
+                    <span id="live-status-pill" class="text-xs text-slate-300 font-mono">
                       Finalizada
                     </span>
                   )}
@@ -404,12 +529,12 @@ if (sessionStudent) {
                       id="live-join-btn"
                       type="button"
                       disabled
-                      class="w-full min-h-[48px] py-4 rounded-xl bg-slate-800 text-slate-400 font-bold text-sm border border-slate-700 flex items-center justify-center gap-2 cursor-not-allowed opacity-80"
+                      class="w-full min-h-[48px] py-4 rounded-xl bg-slate-800 text-slate-300 font-bold text-sm border border-slate-700 flex items-center justify-center gap-2 cursor-not-allowed opacity-80"
                     >
                       <span class="text-xl">⏳</span>
                       <span>Clase en 1 Clic (se activa 15 min antes)</span>
                     </button>
-                    <p id="live-session-help-msg" class="text-slate-400 text-xs text-center mt-2 leading-relaxed">
+                    <p id="live-session-help-msg" class="text-slate-300 text-xs text-center mt-2 leading-relaxed">
                       El botón de ingreso se activará automáticamente 15 minutos antes de la clase.
                     </p>
                   </div>
@@ -481,12 +606,13 @@ if (sessionStudent) {
             id="duda-modal-content"
             class="relative w-full max-w-lg rounded-3xl bg-slate-900 border-2 border-slate-700 shadow-2xl p-6 sm:p-8 text-white"
           >
-            <!-- Botón Cerrar (Accesible) -->
+            <!-- Botón Cerrar (Accesible min 48x48) -->
             <button
-              id="duda-close-btn"
+              id="modal-close-btn"
+              data-alias="duda-close-btn"
               type="button"
               aria-label="Cerrar ventana de duda"
-              class="absolute top-5 right-5 text-slate-400 hover:text-white text-2xl p-2 rounded-xl hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
+              class="absolute top-5 right-5 min-h-[48px] min-w-[48px] flex items-center justify-center text-slate-300 hover:text-white text-2xl p-2 rounded-xl hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
             >
               ✕
             </button>
@@ -500,7 +626,7 @@ if (sessionStudent) {
                 <h3 id="duda-modal-title" class="text-xl sm:text-2xl font-bold font-tech text-white leading-tight">
                   Tengo una Duda
                 </h3>
-                <p id="duda-modal-desc" class="text-xs sm:text-sm text-slate-400 mt-0.5">
+                <p id="duda-modal-desc" class="text-xs sm:text-sm text-slate-300 mt-0.5">
                   Pregunte con total confianza. Su tutor pedagógico revisará su mensaje y le responderá directamente.
                 </p>
               </div>
@@ -538,7 +664,7 @@ if (sessionStudent) {
                   rows="4"
                   required
                   placeholder="Escriba aquí su duda paso a paso. Por ejemplo: 'No entendí cómo activar el brillo automático' o '¿Dónde encuentro la opción en mi teléfono?'."
-                  class="w-full text-base sm:text-lg px-4 py-3.5 rounded-xl bg-slate-950 border-2 border-slate-700 text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all resize-y min-h-[120px]"
+                  class="w-full text-base sm:text-lg px-4 py-3.5 rounded-xl bg-slate-950 border-2 border-slate-700 text-white placeholder-slate-300 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all resize-y min-h-[120px]"
                 ></textarea>
               </div>
 
@@ -550,7 +676,7 @@ if (sessionStudent) {
                 <button
                   type="button"
                   id="duda-cancel-btn"
-                  class="w-full sm:w-auto min-h-[48px] px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm border border-slate-700 cursor-pointer transition-colors"
+                  class="w-full sm:w-auto min-h-[48px] min-w-[48px] px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm border border-slate-700 cursor-pointer transition-colors"
                 >
                   Cancelar
                 </button>
@@ -558,7 +684,7 @@ if (sessionStudent) {
                 <button
                   type="submit"
                   id="duda-submit-btn"
-                  class="w-full sm:w-auto min-h-[48px] px-6 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm sm:text-base shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer transition-transform transform hover:scale-[1.01]"
+                  class="w-full sm:w-auto min-h-[48px] min-w-[48px] px-6 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm sm:text-base shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer transition-transform transform hover:scale-[1.01]"
                 >
                   <span>📩</span>
                   <span id="duda-submit-text">Enviar mi Duda al Tutor</span>
@@ -567,9 +693,75 @@ if (sessionStudent) {
             </form>
           </div>
         </div>
+
+        <!-- Modal Informativo de Mejora a Inscripción Completa para Consultas (ADR 0008 / Issue #1) -->
+        <div
+          id="duda-upgrade-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="duda-upgrade-title"
+          aria-describedby="duda-upgrade-desc"
+          class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4"
+        >
+          <div
+            class="relative w-full max-w-lg rounded-3xl bg-slate-900 border-2 border-amber-500/60 shadow-2xl p-6 sm:p-8 text-white"
+          >
+            <!-- Botón Cerrar (Accesible min 48x48) -->
+            <button
+              id="duda-upgrade-close-btn"
+              type="button"
+              aria-label="Cerrar ventana informativa"
+              class="absolute top-5 right-5 min-h-[48px] min-w-[48px] flex items-center justify-center text-slate-300 hover:text-white text-2xl rounded-xl hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 cursor-pointer"
+            >
+              ✕
+            </button>
+
+            <div class="flex items-center gap-3 mb-4 pr-8">
+              <span class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center justify-center text-2xl shrink-0">
+                🔒
+              </span>
+              <div>
+                <h3 id="duda-upgrade-title" class="text-xl sm:text-2xl font-bold font-tech text-white leading-tight">
+                  Consultas con Tutor Pedagógico
+                </h3>
+                <span class="text-xs font-bold text-amber-400 uppercase tracking-wider">
+                  Exclusivo para Inscripción Completa
+                </span>
+              </div>
+            </div>
+
+            <p id="duda-upgrade-desc" class="text-sm sm:text-base text-slate-200 mb-6 leading-relaxed">
+              El envío de consultas formativas directas al tutor es un beneficio exclusivo para estudiantes con <strong>Inscripción Completa</strong>.
+              <br /><br />
+              Pase a la Inscripción Completa para tener acompañamiento personal paso a paso, resolver cualquier inquietud directamente con su profesor y participar en los talleres grupales en directo.
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                id="duda-upgrade-cancel-btn"
+                class="w-full sm:w-auto min-h-[48px] min-w-[48px] px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm border border-slate-700 cursor-pointer transition-colors"
+              >
+                Volver a la Clase
+              </button>
+
+              <a
+                href="https://wa.me/573000000000?text=Hola,%20tengo%20Ruta%20Abierta%20y%20deseo%20solicitar%20la%20Inscripción%20Completa%20para%20enviar%20consultas%20a%20mi%20tutor."
+                target="_blank"
+                rel="noopener noreferrer"
+                class="w-full sm:w-auto min-h-[48px] min-w-[48px] px-6 py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm sm:text-base shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer transition-transform transform hover:scale-[1.01]"
+              >
+                <span>💬</span>
+                <span>Solicitar Inscripción Completa</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
         <script id="lms-initial-data" type="application/json" set:html={JSON.stringify({
           route,
           completedSlugs,
+          isEnrolledFull,
         })} />
       </div>
     )}
@@ -685,8 +877,8 @@ if (sessionStudent) {
               joinBtn.parentNode?.replaceChild(a, joinBtn);
             }
           } else if (data.status === 'upcoming') {
-            if (pill && data.startsInMinutes > 0) {
-              pill.textContent = `Inicia en ${data.startsInMinutes} min`;
+            if (pill) {
+              pill.textContent = data.startsInDisplay || (data.startsInMinutes > 0 && data.startsInMinutes <= 60 ? `Inicia en ${data.startsInMinutes} min` : data.formattedTime || 'Próximamente');
             }
           }
         } catch {

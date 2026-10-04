@@ -26,6 +26,7 @@ describe('Consultas API Endpoint (POST /api/consultas)', () => {
     student = await findOrCreateStudent(db, {
       email: 'marta.estudiante@ejemplo.com',
       nombre: 'Marta Gómez',
+      nivel_acceso: 'inscripcion_completa',
     });
 
     const token = await createSessionToken(student, secret);
@@ -203,5 +204,58 @@ describe('Consultas API Endpoint (POST /api/consultas)', () => {
     expect(fakeEmailService.outbox.length).toBe(1);
     const email = fakeEmailService.outbox[0];
     expect(email.to).toBe(customTutor);
+  });
+
+  it('blocks student with ruta_abierta with 403 Forbidden requiring inscripcion_completa', async () => {
+    const openStudent = await findOrCreateStudent(db, {
+      email: 'carlos.abierto@ejemplo.com',
+      nombre: 'Carlos Abierto',
+      nivel_acceso: 'ruta_abierta',
+    });
+    const openToken = await createSessionToken(openStudent, secret);
+    const openCookie = `lms_session=${openToken}`;
+
+    const ctx = createMockContext(
+      `${origin}/api/consultas`,
+      'POST',
+      {
+        microcapsulaSlug: 'identificar-estafas-whatsapp',
+        mensaje: '¿Cómo reporto un número sospechoso en WhatsApp?',
+      },
+      { cookie: openCookie }
+    );
+
+    const res = await handlePostConsulta(ctx);
+    expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.success).toBe(false);
+    expect(data.error).toBe('requires_inscripcion_completa');
+    expect(data.message).toBe('El envío de consultas formativas directas al tutor requiere Inscripción Completa.');
+  });
+
+  it('allows admin to submit consultation even if nivel_acceso is ruta_abierta', async () => {
+    const admin = await findOrCreateStudent(db, {
+      email: 'admin.consultas@lddigital.co',
+      nombre: 'Admin Tutor',
+      rol: 'admin',
+      nivel_acceso: 'ruta_abierta',
+    });
+    const adminToken = await createSessionToken(admin, secret);
+    const adminCookie = `lms_session=${adminToken}`;
+
+    const ctx = createMockContext(
+      `${origin}/api/consultas`,
+      'POST',
+      {
+        microcapsulaSlug: 'identificar-estafas-whatsapp',
+        mensaje: 'Consulta técnica enviada por el administrador.',
+      },
+      { cookie: adminCookie }
+    );
+
+    const res = await handlePostConsulta(ctx);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
   });
 });
