@@ -40,3 +40,11 @@ export interface Estudiante {
   nivel_acceso: 'ruta_abierta' | 'inscripcion_completa';
   creado_en: string;
 }
+
+export interface Progreso {
+  id: number;
+  estudiante_id: string;
+  microcapsula_slug: string;
+  completado_en: string;
+}
+

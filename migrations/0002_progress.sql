@@ -1,18 +1,5 @@
--- Esquema D1 de Base de Datos para LDDIGITALCO
--- Tabla: estudiantes
-
-CREATE TABLE IF NOT EXISTS estudiantes (
-  id TEXT PRIMARY KEY,
-  email TEXT UNIQUE NOT NULL,
-  nombre TEXT NOT NULL,
-  rol TEXT NOT NULL DEFAULT 'estudiante',
-  nivel_acceso TEXT NOT NULL DEFAULT 'ruta_abierta',
-  creado_en TEXT NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_estudiantes_email ON estudiantes(email);
-
--- Tabla: progreso (Registro de Microcápsulas Completadas)
+-- Migración D1: Tabla de Progreso Formativo
+-- 0002_progress.sql
 
 CREATE TABLE IF NOT EXISTS progreso (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

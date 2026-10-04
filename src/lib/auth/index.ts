@@ -19,6 +19,17 @@ function getDevDb(): D1Database {
         creado_en TEXT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS idx_estudiantes_email ON estudiantes(email);
+
+      CREATE TABLE IF NOT EXISTS progreso (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        estudiante_id TEXT NOT NULL,
+        microcapsula_slug TEXT NOT NULL,
+        completado_en TEXT NOT NULL,
+        FOREIGN KEY (estudiante_id) REFERENCES estudiantes(id) ON DELETE CASCADE,
+        UNIQUE (estudiante_id, microcapsula_slug)
+      );
+      CREATE INDEX IF NOT EXISTS idx_progreso_estudiante ON progreso(estudiante_id);
+      CREATE INDEX IF NOT EXISTS idx_progreso_slug ON progreso(microcapsula_slug);
     `);
   }
   return devDb;
@@ -30,9 +41,14 @@ export interface AuthContextInput {
   url?: URL;
 }
 
+export function getDbFromContext(context: AuthContextInput): D1Database {
+  const env = context.locals?.runtime?.env || (typeof process !== 'undefined' ? process.env : {});
+  return env.DB || getDevDb();
+}
+
 export function getAuthServiceFromContext(context: AuthContextInput): AuthService {
   const env = context.locals?.runtime?.env || (typeof process !== 'undefined' ? process.env : {});
-  const db: D1Database = env.DB || getDevDb();
+  const db: D1Database = getDbFromContext(context);
   const secret: string = env.AUTH_SECRET || 'lddigitalco-secret-key-32-chars-minimum-dev';
   const emailService = getEmailService(env);
   const appUrl = env.APP_URL || (context.url ? `${context.url.protocol}//${context.url.host}` : 'http://localhost:4321');
@@ -46,6 +62,7 @@ export function getAuthServiceFromContext(context: AuthContextInput): AuthServic
     isProduction,
   });
 }
+
 
 export * from './crypto';
 export * from './service';
