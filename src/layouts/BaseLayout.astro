@@ -1,0 +1,141 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+  theme?: 'dark' | 'senior';
+  activeNav?: string;
+}
+
+const { 
+  title = "LDDIGITALCO — Ecosistema Digital & Consultoría Estratégica",
+  description = "Ecosistema Integral de Transformación Digital & Capacitación. Consultoría B2B, Inteligencia Artificial y Programa +50.",
+  theme = "dark",
+  activeNav = "inicio"
+} = Astro.props;
+
+const isSeniorTheme = theme === 'senior';
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title}</title>
+  <meta name="description" content={description}>
+  <script is:inline src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class={`min-h-screen antialiased flex flex-col ${isSeniorTheme ? 'bg-[#060e0b] text-slate-100 text-lg' : 'bg-[#070b13] text-[#e2e8f0]'}`}>
+
+  {/* Senior Navigation */}
+  {isSeniorTheme ? (
+    <nav class="sticky top-0 z-50 bg-[#081510]/95 border-b border-emerald-900/60 backdrop-blur-md px-6 py-5">
+      <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <a href="/" class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-400 to-green-500 flex items-center justify-center text-black font-black text-2xl shadow-lg shadow-emerald-500/30">
+            +50
+          </div>
+          <div>
+            <span class="text-2xl font-bold font-tech tracking-wider text-white">LDDIGITAL<span class="text-emerald-400">CO</span></span>
+            <span class="block text-xs text-emerald-400 font-semibold tracking-wider uppercase">Programa +50 Senior</span>
+          </div>
+        </a>
+
+        <div class="hidden md:flex items-center gap-8 text-base font-semibold text-slate-200">
+          <a href="/" class="hover:text-emerald-400 transition-colors">← Inicio</a>
+          <a href="#modulos" class="hover:text-emerald-400 transition-colors">¿Qué Aprenderé?</a>
+          <a href="#como-funciona" class="hover:text-emerald-400 transition-colors">¿Cómo Funciona?</a>
+          <a href="/alumnos" class="text-emerald-400 font-bold hover:underline">Ver Portal del Estudiante ▶</a>
+        </div>
+
+        <button onclick="openWhatsApp('Hola, quisiera información sobre el Programa +50 para adultos mayores.')" class="px-6 py-3.5 rounded-2xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-sm shadow-lg shadow-emerald-500/25 flex items-center gap-2">
+          <span class="text-lg">💬</span>
+          <span>Hablar por WhatsApp</span>
+        </button>
+      </div>
+    </nav>
+  ) : (
+    /* Standard Navigation */
+    <nav class="sticky top-0 z-50 bg-[#070b13]/90 border-b border-slate-800/80 backdrop-blur-md px-6 py-4">
+      <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <a href="/" class="flex items-center gap-3 group">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-emerald-400 flex items-center justify-center text-black font-black text-xl shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform">
+            LD
+          </div>
+          <div>
+            <span class="text-2xl font-bold font-tech tracking-wider text-white">LDDIGITAL<span class="text-cyan-400">CO</span></span>
+            <span class="block text-[10px] text-slate-300 font-medium tracking-widest uppercase">Digital & Advisory</span>
+          </div>
+        </a>
+
+        <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
+          <a href="/" class={activeNav === 'inicio' ? "text-cyan-400 font-semibold" : "hover:text-cyan-400 transition-colors"}>Inicio</a>
+          <a href="/#pilares" class="hover:text-cyan-400 transition-colors">Los 4 Pilares</a>
+          <a href="/b2b" class={activeNav === 'b2b' ? "text-cyan-400 font-semibold" : "hover:text-cyan-400 transition-colors"}>B2B & Marcas</a>
+          <a href="/senior" class={activeNav === 'senior' ? "text-emerald-400 font-semibold" : "hover:text-emerald-400 transition-colors"}>Programa +50</a>
+          <a href="/alumnos" class="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            Portal del Estudiante
+          </a>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button onclick="openBookingModal('Diagnóstico Estratégico')" class="px-5 py-2.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs shadow-md shadow-cyan-500/20 transition-all transform hover:-translate-y-0.5 flex items-center gap-1.5">
+            <span>Agendar Asesoría</span>
+            <span class="text-sm">→</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+  )}
+
+  <slot />
+
+  {/* Shared Booking Modal */}
+  <div id="booking-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass-card max-w-md w-full rounded-2xl p-6 border border-cyan-500/40 shadow-2xl relative">
+      <button id="modal-close-btn" onclick="closeBookingModal()" aria-label="Cerrar modal" class="absolute top-4 right-4 min-h-[48px] min-w-[48px] flex items-center justify-center text-slate-300 hover:text-white text-xl rounded-lg">✕</button>
+      
+      <span class="text-xs font-bold text-cyan-400 uppercase tracking-wider font-tech">Agendamiento LDDIGITALCO</span>
+      <h3 id="modal-service-name" class="text-xl font-bold font-tech text-white mt-1 mb-2">Asesoría Corporativa</h3>
+      <p class="text-slate-300 text-xs mb-6">Seleccione su información para agendar su sesión de diagnóstico estratégico de 30 minutos.</p>
+
+      <form onsubmit="handleBookingSubmit(event)" class="space-y-3 mb-6">
+        <div>
+          <label class="text-xs text-slate-300 block mb-1">Nombre o Empresa</label>
+          <input id="booking-name" required type="text" placeholder="Ej. Juan Pérez / Tech Soluciones" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-300 block mb-1">Correo Electrónico</label>
+          <input id="booking-email" required type="email" placeholder="contacto@empresa.com" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+        </div>
+        <div>
+          <label class="text-xs text-slate-300 block mb-1">Fecha deseada</label>
+          <input id="booking-date" required type="date" value="2026-10-10" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="closeBookingModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 min-h-[48px]">Cancelar</button>
+          <button type="submit" class="w-1/2 py-2.5 rounded-xl bg-cyan-400 text-slate-950 font-bold text-xs shadow-md shadow-cyan-500/20 min-h-[48px]">Confirmar Cita</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {/* Footer */}
+  <footer class="bg-[#05080e] border-t border-slate-800/80 py-8 px-4 mt-auto">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-300">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-white font-tech text-sm">LDDIGITALCO</span>
+        <span>•</span>
+        <span>Asesoría Emprendedores • Asesoría Corporativa • Programa +50 • Plan Marca Personal</span>
+      </div>
+      <div>
+        <span>Desarrollado con arquitectura moderna sobre Cloudflare Edge</span>
+      </div>
+    </div>
+  </footer>
+
+  <script is:inline src="/js/app.js"></script>
+</body>
+</html>

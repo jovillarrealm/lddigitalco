@@ -1,0 +1,147 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="B2B & Marcas Personales — LDDIGITALCO" activeNav="b2b">
+  <!-- B2B Header -->
+  <header class="py-16 px-4 max-w-5xl mx-auto text-center">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950 border border-cyan-500/30 text-cyan-300 text-xs font-semibold mb-4">
+      <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+      Consultoría de Alto Rendimiento
+    </div>
+    <h1 class="text-4xl sm:text-6xl font-extrabold font-tech text-white mb-6">
+      Aceleración con <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Inteligencia Artificial</span> y Marca
+    </h1>
+    <p class="text-slate-300 text-lg max-w-2xl mx-auto">
+      Estructuramos, automatizamos y potenciamos las operaciones y la presencia digital de comerciantes, pymes y directivos.
+    </p>
+  </header>
+
+  <!-- Detailed Pillars -->
+  <main class="max-w-6xl mx-auto px-4 pb-20 space-y-16">
+    
+    <!-- 1. Asesoría Emprendedores -->
+    <section id="emprendedores" class="glass-card rounded-3xl p-8 sm:p-12 border border-slate-700/80 hover:glow-border-blue transition-all">
+      <div class="grid md:grid-cols-3 gap-8 items-center">
+        <div class="md:col-span-2">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="px-3 py-1 rounded text-xs font-bold bg-cyan-500/20 text-cyan-300 uppercase">Pilar 01</span>
+            <span class="text-xs text-slate-400">Comercios, Startups & Independientes</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-bold font-tech text-white mb-4">Asesoría Emprendedores</h2>
+          <p class="text-slate-300 text-sm leading-relaxed mb-6">
+            Lleve su negocio al mundo digital sin perder tiempo en pruebas a ciegas. Le ayudamos a utilizar herramientas de IA para generar contenido comercial, configurar chatbots de atención al cliente y optimizar sus ventas diarias.
+          </p>
+          <div class="grid sm:grid-cols-2 gap-3 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+              <strong class="text-cyan-400 block mb-1">✓ IA para Comercios</strong>
+              Automatización de catálogos y mensajes de venta.
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+              <strong class="text-cyan-400 block mb-1">✓ Validación de Oferta</strong>
+              Estructuración de propuesta de valor y precios.
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+              <strong class="text-cyan-400 block mb-1">✓ Flujos de Trabajo</strong>
+              Ahorre más de 10 horas semanales en tareas repetitivas.
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+              <strong class="text-cyan-400 block mb-1">✓ Mentoría 1 a 1</strong>
+              Sesiones de feedback en vivo para corregir errores.
+            </div>
+          </div>
+        </div>
+        <div class="text-center p-6 bg-slate-900/90 rounded-2xl border border-slate-800 flex flex-col justify-center">
+          <span class="text-xs text-slate-400">Modalidad Híbrida</span>
+          <span class="text-3xl font-extrabold font-tech text-white my-3">1 a 1 + LMS</span>
+          <button onclick="openBookingModal('Asesoría Emprendedores')" class="w-full py-3.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs shadow-md shadow-cyan-500/20">
+            Agendar Diagnóstico →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Asesoría Corporativa -->
+    <section id="corporativa" class="glass-card rounded-3xl p-8 sm:p-12 border-2 border-cyan-500/40 glow-blue">
+      <div class="grid md:grid-cols-3 gap-8 items-center">
+        <div class="md:col-span-2">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="px-3 py-1 rounded text-xs font-bold bg-cyan-400 text-slate-950 uppercase">Pilar 02 • Empresas</span>
+            <span class="text-xs text-slate-300">Pymes Consolidadas & Equipos</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-bold font-tech text-white mb-4">Asesoría Corporativa</h2>
+          <p class="text-slate-200 text-sm leading-relaxed mb-6">
+            Reestructuración y transformación operativa con agentes autónomos e Inteligencia Artificial generativa. Entrenamos a sus líderes y departamentos para multiplicar la productividad y reducir costes de ejecución.
+          </p>
+          <div class="grid sm:grid-cols-2 gap-3 text-xs text-slate-200">
+            <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-700">
+              <strong class="text-cyan-400 block mb-1">✓ Auditoría de Procesos</strong>
+              Mapeo de cuellos de botella y oportunidades con IA.
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-700">
+              <strong class="text-cyan-400 block mb-1">✓ Capacitación de Equipos</strong>
+              Talleres prácticos in-company adaptados a su sector.
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-700">
+              <strong class="text-cyan-400 block mb-1">✓ Integración de Agentes</strong>
+              Asistentes de IA para soporte, ventas y finanzas.
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-700">
+              <strong class="text-cyan-400 block mb-1">✓ Acompañamiento VIP</strong>
+              Consultor asignado con seguimiento continuo de KPIs.
+            </div>
+          </div>
+        </div>
+        <div class="text-center p-6 bg-slate-900/90 rounded-2xl border border-cyan-500/30 flex flex-col justify-center">
+          <span class="text-xs text-slate-400">Solución a Medida</span>
+          <span class="text-3xl font-extrabold font-tech text-cyan-300 my-3">Empresas</span>
+          <button onclick="openBookingModal('Asesoría Corporativa')" class="w-full py-3.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs shadow-md shadow-cyan-500/20">
+            Solicitar Propuesta B2B →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Plan Marca Personal -->
+    <section id="marca-personal" class="glass-card rounded-3xl p-8 sm:p-12 border border-slate-700/80 hover:glow-border-blue transition-all">
+      <div class="grid md:grid-cols-3 gap-8 items-center">
+        <div class="md:col-span-2">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="px-3 py-1 rounded text-xs font-bold bg-cyan-500/20 text-cyan-300 uppercase">Pilar 04</span>
+            <span class="text-xs text-slate-400">Directivos, Consultores & Creadores</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-bold font-tech text-white mb-4">Plan Marca Personal</h2>
+          <p class="text-slate-300 text-sm leading-relaxed mb-6">
+            Convierta su experiencia en autoridad de mercado. Desarrollamos su narrativa estratégica, calendario editorial y sistemas de distribución en LinkedIn, Instagram y newsletters potenciados por IA.
+          </p>
+          <div class="grid sm:grid-cols-2 gap-3 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+              <strong class="text-cyan-400 block mb-1">✓ Posicionamiento Omnicanal</strong>
+              Presencia sólida y coherente donde están sus clientes.
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+              <strong class="text-cyan-400 block mb-1">✓ Sistema de Contenido con IA</strong>
+              Cree publicaciones de alto valor en minutos, no horas.
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+              <strong class="text-cyan-400 block mb-1">✓ Estrategia de Captación</strong>
+              Transforme lectores y seguidores en clientes calificados.
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+              <strong class="text-cyan-400 block mb-1">✓ Revisiones Mensuales</strong>
+              Ajustes de métricas, estilo y nuevos formatos.
+            </div>
+          </div>
+        </div>
+        <div class="text-center p-6 bg-slate-900/90 rounded-2xl border border-slate-800 flex flex-col justify-center">
+          <span class="text-xs text-slate-400">Plan de Autoridad</span>
+          <span class="text-3xl font-extrabold font-tech text-white my-3">Liderazgo</span>
+          <button onclick="openBookingModal('Plan Marca Personal')" class="w-full py-3.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs shadow-md shadow-cyan-500/20">
+            Construir mi Marca →
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</BaseLayout>

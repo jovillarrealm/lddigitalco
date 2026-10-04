@@ -58,6 +58,6 @@ server.listen(PORT, () => {
   console.log(`   - Portada Unificada: http://localhost:${PORT}/index.html`);
   console.log(`   - Portal B2B:        http://localhost:${PORT}/b2b.html`);
   console.log(`   - Programa +50:      http://localhost:${PORT}/senior.html`);
-  console.log(`   - Portal Alumnos:    http://localhost:${PORT}/alumnos.html`);
+  console.log(`   - Portal Estudiante: http://localhost:${PORT}/alumnos`);
   console.log('========================================================');
 });
