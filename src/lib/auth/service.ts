@@ -1,5 +1,7 @@
 import type { D1Database, Estudiante } from '../db/types';
 import type { EmailService } from '../email/types';
+import { NotificadorFormativo } from '../email/notificador-formativo';
+
 import { findOrCreateStudent, getStudentById, getStudentByEmail } from '../db/estudiantes';
 import {
   createMagicLinkToken,
@@ -77,70 +79,13 @@ export class AuthService {
       const origin = input.origin || this.appUrl;
       const verifyUrl = `${origin}/api/auth/verify?token=${encodeURIComponent(token)}`;
 
-      const htmlContent = `
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <title>Acceso sin Contraseña — LDDIGITALCO</title>
-</head>
-<body style="margin: 0; padding: 24px; background-color: #070B13; font-family: 'Plus Jakarta Sans', Arial, sans-serif; color: #FFFFFF;">
-  <table width="100%" border="0" cellspacing="0" cellpadding="0">
-    <tr>
-      <td align="center">
-        <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #0F172A; border-radius: 16px; border: 1px solid #1E293B; padding: 32px; text-align: left;">
-          <tr>
-            <td>
-              <h1 style="color: #00FF87; font-size: 24px; margin-top: 0; margin-bottom: 8px;">LDDIGITALCO</h1>
-              <h2 style="color: #FFFFFF; font-size: 20px; margin-top: 0; margin-bottom: 16px;">Su enlace de acceso al Aula Digital</h2>
-              <p style="color: #CBD5E1; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-                Hola <strong>${student.nombre}</strong>,<br><br>
-                Ha solicitado ingresar a su portal de aprendizaje en <strong>LDDIGITALCO</strong> sin necesidad de contraseñas.
-              </p>
-              <table border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px;">
-                <tr>
-                  <td align="center" style="border-radius: 12px; background-color: #00FF87;">
-                    <a href="${verifyUrl}" target="_blank" style="font-size: 16px; font-weight: bold; color: #020617; text-decoration: none; padding: 14px 28px; border-radius: 12px; display: inline-block;">
-                      Entrar a mi Aula Digital en 1 Clic
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              <p style="color: #94A3B8; font-size: 14px; line-height: 1.5; margin-bottom: 16px;">
-                Este enlace es seguro y expirará en <strong>15 minutos</strong>. Si el botón no abre directamente, copie y pegue el siguiente enlace en su navegador:
-              </p>
-              <p style="background-color: #070B13; padding: 12px; border-radius: 8px; font-size: 12px; color: #00D2FF; word-break: break-all;">
-                ${verifyUrl}
-              </p>
-              <hr style="border: none; border-top: 1px solid #1E293B; margin: 24px 0;">
-              <p style="color: #64748B; font-size: 12px; margin: 0;">
-                Si usted no solicitó este enlace, puede ignorar este mensaje tranquilamente. Nadie puede acceder a su portal sin este enlace.
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-      `;
-
-      const textContent = `
-Hola ${student.nombre},
-
-Su enlace de acceso a LDDIGITALCO está listo:
-${verifyUrl}
-
-Este enlace expira en 15 minutos. Si usted no solicitó este mensaje, puede ignorarlo con tranquilidad.
-      `.trim();
-
-      const sendResult = await this.emailService.send({
-        to: student.email,
-        subject: 'Su enlace de acceso a LDDIGITALCO — Entrada en 1 Clic',
-        html: htmlContent,
-        text: textContent,
+      const notificador = new NotificadorFormativo(this.emailService);
+      const sendResult = await notificador.enviarAccesoSinContrasena({
+        email: student.email,
+        nombre: student.nombre,
+        verifyUrl,
       });
+
 
       if (!sendResult.success) {
         return {

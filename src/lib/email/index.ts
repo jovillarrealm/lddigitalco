@@ -5,6 +5,11 @@ import { ResendEmailService } from './resend-email-service';
 export * from './types';
 export * from './fake-email-service';
 export * from './resend-email-service';
+export * from './notificador-formativo';
+export * from './templates/acceso-sin-contrasena';
+export * from './templates/alerta-duda-tutor';
+
+import { NotificadorFormativo } from './notificador-formativo';
 
 let defaultFakeEmailService: FakeEmailService | null = null;
 
@@ -34,3 +39,10 @@ export function getEmailService(env?: {
   // En desarrollo o testing sin API key, usar FakeEmailService
   return getFakeEmailService();
 }
+
+export function getNotificadorFormativo(envOrContext?: any): NotificadorFormativo {
+  const env = envOrContext?.locals?.runtime?.env ? envOrContext.locals.runtime.env : envOrContext;
+  const transport = getEmailService(env);
+  return new NotificadorFormativo(transport);
+}
+

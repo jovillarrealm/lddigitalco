@@ -1,17 +1,14 @@
-import type { APIRoute } from 'astro';
-import { getAuthServiceFromContext, getDbFromContext } from '../../lib/auth';
-import {
-  markComplete,
-  unmarkComplete,
-  getProgressByStudent,
-} from '../../lib/db/progreso';
-import { getStudentById } from '../../lib/db/estudiantes';
-import {
-  getRouteBySlug,
-  findCapsuleBySlug,
-  calculateRouteProgress,
-} from '../../lib/courses';
+// LDDIGITALCO — Adaptador HTTP: Progreso Formativo
+// Interfaz delgada que delega el cálculo, persistencia y control de acceso a ProgresoFormativo
 
+import type { APIRoute } from 'astro';
+import { getAuthServiceFromContext } from '../../lib/auth';
+import {
+  getProgresoFormativoFromContext,
+  ProgresoAccesoDenegadoError,
+  ProgresoRutaNoEncontradaError,
+  ProgresoValidacionError,
+} from '../../lib/courses/progreso-formativo';
 
 export const prerender = false;
 
@@ -26,78 +23,52 @@ export const GET: APIRoute = async (context) => {
         success: false,
         error: 'No autorizado. Debe iniciar sesión para consultar el progreso formativo.',
       }),
-      {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      }
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
   }
-
-  const db = getDbFromContext(context);
-  const freshStudent = await getStudentById(db, session.id);
-  const studentLevel = freshStudent?.nivel_acceso || session.nivel_acceso;
 
   const rutaSlug = url.searchParams.get('ruta') || 'ciberseguridad-whatsapp';
-  const route = getRouteBySlug(rutaSlug);
+  const progresoService = getProgresoFormativoFromContext(context);
 
-  if (!route) {
+  try {
+    const summary = await progresoService.consultarProgreso(session, rutaSlug);
     return new Response(
       JSON.stringify({
-        success: false,
-        error: `Ruta de aprendizaje '${rutaSlug}' no encontrada.`,
+        success: true,
+        ...summary,
       }),
-      {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      }
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
-  }
-
-  // Tier access control: block ruta_abierta from inscripcion_completa
-  if (
-    route.nivel === 'inscripcion_completa' &&
-    studentLevel === 'ruta_abierta' &&
-    session.rol !== 'admin' &&
-    session.rol !== 'tutor'
-  ) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: 'requires_inscripcion_completa',
-        message: 'Esta ruta requiere Inscripción Completa.',
-      }),
-      {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
-  }
-
-
-  const progressRecords = await getProgressByStudent(db, session.id);
-  const completedSlugs = progressRecords.map((p) => p.microcapsula_slug);
-  const stats = calculateRouteProgress(completedSlugs, route);
-
-  const routeCompletedSlugs = route.microcapsulas
-    .filter((c) => completedSlugs.includes(c.slug))
-    .map((c) => c.slug);
-
-  return new Response(
-    JSON.stringify({
-      success: true,
-      ruta: route.slug,
-      tituloRuta: route.titulo,
-      total: stats.total,
-      completadas: stats.completadas,
-      porcentaje: stats.porcentaje,
-      completadasSlugs: routeCompletedSlugs,
-      todosCompletados: stats.porcentaje === 100,
-    }),
-    {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
+  } catch (err: any) {
+    if (err instanceof ProgresoAccesoDenegadoError) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: err.code,
+          message: err.message,
+        }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
     }
-  );
+
+    if (err instanceof ProgresoRutaNoEncontradaError) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: err.message,
+        }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: err.message || 'Error interno del servidor.',
+      }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
 };
 
 export const POST: APIRoute = async (context) => {
@@ -111,10 +82,7 @@ export const POST: APIRoute = async (context) => {
         success: false,
         error: 'No autorizado. Debe iniciar sesión para actualizar su progreso.',
       }),
-      {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      }
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
@@ -127,91 +95,59 @@ export const POST: APIRoute = async (context) => {
         success: false,
         error: 'Cuerpo de solicitud JSON no válido.',
       }),
-      {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      }
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   }
 
-  const { microcapsulaSlug, completado = true, rutaSlug } = body || {};
+  const progresoService = getProgresoFormativoFromContext(context);
 
-  if (!microcapsulaSlug || typeof microcapsulaSlug !== 'string' || !microcapsulaSlug.trim()) {
+  try {
+    const result = await progresoService.registrarCompletitud(session, body || {});
     return new Response(
       JSON.stringify({
-        success: false,
-        error: 'El campo microcapsulaSlug es obligatorio.',
+        success: true,
+        ...result,
       }),
-      {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      }
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
-  }
-
-  const normalizedSlug = microcapsulaSlug.trim();
-  const db = getDbFromContext(context);
-  const freshStudent = await getStudentById(db, session.id);
-  const studentLevel = freshStudent?.nivel_acceso || session.nivel_acceso;
-
-  // Determine route to validate access and return updated progress
-  let targetRoute = rutaSlug ? getRouteBySlug(rutaSlug) : undefined;
-  if (!targetRoute) {
-    const found = findCapsuleBySlug(normalizedSlug);
-    targetRoute = found ? found.route : getRouteBySlug('ciberseguridad-whatsapp')!;
-  }
-
-  // Tier access control: block ruta_abierta from inscripcion_completa
-  if (
-    targetRoute.nivel === 'inscripcion_completa' &&
-    studentLevel === 'ruta_abierta' &&
-    session.rol !== 'admin' &&
-    session.rol !== 'tutor'
-  ) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: 'requires_inscripcion_completa',
-        message: 'Esta ruta requiere Inscripción Completa.',
-      }),
-      {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
-  }
-
-  if (completado !== false) {
-    await markComplete(db, session.id, normalizedSlug);
-  } else {
-    await unmarkComplete(db, session.id, normalizedSlug);
-  }
-
-
-  const progressRecords = await getProgressByStudent(db, session.id);
-  const completedSlugs = progressRecords.map((p) => p.microcapsula_slug);
-  const stats = calculateRouteProgress(completedSlugs, targetRoute);
-
-  const routeCompletedSlugs = targetRoute.microcapsulas
-    .filter((c) => completedSlugs.includes(c.slug))
-    .map((c) => c.slug);
-
-  return new Response(
-    JSON.stringify({
-      success: true,
-      microcapsulaSlug: normalizedSlug,
-      completado: completado !== false,
-      progreso: {
-        ruta: targetRoute.slug,
-        total: stats.total,
-        completadas: stats.completadas,
-        porcentaje: stats.porcentaje,
-        completadasSlugs: routeCompletedSlugs,
-      },
-    }),
-    {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
+  } catch (err: any) {
+    if (err instanceof ProgresoAccesoDenegadoError) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: err.code,
+          message: err.message,
+        }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
     }
-  );
+
+    if (err instanceof ProgresoValidacionError) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: err.message,
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (err instanceof ProgresoRutaNoEncontradaError) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: err.message,
+        }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: err.message || 'Error interno del servidor.',
+      }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
 };

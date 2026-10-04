@@ -215,5 +215,43 @@ describe('Live Session Service and Banner (Issue #6)', () => {
       expect(data.upgradePrompt).toBeDefined();
       expect(data.upgradePrompt.message).toContain('Inscripción Completa');
     });
+
+    it('persists and retrieves live session state with D1LiveSessionRepository', async () => {
+      const { D1LiveSessionRepository } = await import('../src/lib/courses/live-session-repository');
+      const { SesionEnVivoManager } = await import('../src/lib/courses/live-session');
+
+      const repo = new D1LiveSessionRepository(db);
+      const manager = new SesionEnVivoManager(repo);
+
+      // Verify default
+      const initial = await manager.getConfiguredSession();
+      expect(initial.title).toBeDefined();
+
+      // Update session
+      await manager.updateSession({
+        title: 'Taller Exclusivo de Ciberseguridad Avanzada',
+        durationMinutes: 90,
+        meetUrl: 'https://meet.google.com/ldd-d1-persisted',
+      });
+
+      // Verify persisted in repo
+      const updated = await manager.getConfiguredSession();
+      expect(updated.title).toBe('Taller Exclusivo de Ciberseguridad Avanzada');
+      expect(updated.durationMinutes).toBe(90);
+      expect(updated.meetUrl).toBe('https://meet.google.com/ldd-d1-persisted');
+
+      // Verify student view with full access
+      const fullStudent = await findOrCreateStudent(db, {
+        email: 'vip.persistence@test.com',
+        nombre: 'VIP Persistence',
+        nivel_acceso: 'inscripcion_completa',
+      });
+
+      const studentView = await manager.getStudentView(fullStudent);
+      expect(studentView.canAccess).toBe(true);
+      expect(studentView.meetUrl).toBe('https://meet.google.com/ldd-d1-persisted');
+      expect(studentView.upgradePrompt).toBeNull();
+    });
   });
 });
+

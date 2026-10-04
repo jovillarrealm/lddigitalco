@@ -40,3 +40,12 @@ CREATE TABLE IF NOT EXISTS consultas (
 
 CREATE INDEX IF NOT EXISTS idx_consultas_estudiante ON consultas(estudiante_id);
 CREATE INDEX IF NOT EXISTS idx_consultas_slug ON consultas(microcapsula_slug);
+
+-- Tabla: configuracion (Almacenamiento Clave-Valor para Estado y Configuraciones en Borde)
+
+CREATE TABLE IF NOT EXISTS configuracion (
+  clave TEXT PRIMARY KEY,
+  valor TEXT NOT NULL,
+  actualizado_en TEXT NOT NULL
+);
+

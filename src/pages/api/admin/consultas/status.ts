@@ -1,9 +1,13 @@
-// LDDIGITALCO — Endpoint de Estado de Consultas Formativas
-// Permite al Administrador o Tutor marcar dudas como respondidas o pendientes
+// LDDIGITALCO — Adaptador HTTP: Estado de Consultas Formativas (Admin / Tutor)
+// Delega la mutación de estado a ConsultaFormativaService
 
 import type { APIRoute } from 'astro';
-import { getAuthServiceFromContext, getDbFromContext, getEnvFromContext } from '../../../../lib/auth';
-import { updateConsultaEstado, getConsultaById } from '../../../../lib/db/consultas';
+import { getAuthServiceFromContext, getEnvFromContext } from '../../../../lib/auth';
+import {
+  getConsultaFormativaServiceFromContext,
+  ConsultaValidacionError,
+  ConsultaNoEncontradaError,
+} from '../../../../lib/consultas';
 
 export const prerender = false;
 
@@ -40,39 +44,37 @@ export const POST: APIRoute = async (context) => {
     );
   }
 
-  const { consultaId, estado } = body;
-  if (!consultaId || typeof consultaId !== 'string') {
+  const { consultaId, estado } = body || {};
+  const service = getConsultaFormativaServiceFromContext(context);
+
+  try {
+    const updated = await service.cambiarEstado(consultaId, estado);
+
     return new Response(
-      JSON.stringify({ success: false, error: 'consultaId es requerido.' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({
+        success: true,
+        message: `Consulta formativa marcada como '${updated.estado}'.`,
+        consultaId: updated.id,
+        estado: updated.estado,
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  } catch (err: any) {
+    if (err instanceof ConsultaValidacionError) {
+      return new Response(
+        JSON.stringify({ success: false, error: err.message }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    if (err instanceof ConsultaNoEncontradaError) {
+      return new Response(
+        JSON.stringify({ success: false, error: err.message }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    return new Response(
+      JSON.stringify({ success: false, error: err.message || 'Error interno del servidor.' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
-
-  if (estado !== 'pendiente' && estado !== 'respondida') {
-    return new Response(
-      JSON.stringify({ success: false, error: "estado debe ser 'pendiente' o 'respondida'." }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-
-  const db = getDbFromContext(context);
-  const existing = await getConsultaById(db, consultaId);
-  if (!existing) {
-    return new Response(
-      JSON.stringify({ success: false, error: 'Consulta formativa no encontrada.' }),
-      { status: 404, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-
-  await updateConsultaEstado(db, consultaId, estado);
-
-  return new Response(
-    JSON.stringify({
-      success: true,
-      message: `Consulta formativa marcada como '${estado}'.`,
-      consultaId,
-      estado,
-    }),
-    { status: 200, headers: { 'Content-Type': 'application/json' } }
-  );
 };

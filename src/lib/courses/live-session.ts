@@ -197,3 +197,129 @@ export function getUpcomingLiveSession(
   return getLiveSessionStatus(session, referenceTime);
 }
 
+import type { Estudiante } from '../db/types';
+import { hasFullAccess } from '../auth/tier';
+import type { LiveSessionRepository } from './live-session-repository';
+
+export interface LiveSessionStudentView {
+  success: true;
+  session: {
+    id: string;
+    title: string;
+    description: string;
+    scheduledAt: string;
+    durationMinutes: number;
+    nextScheduledAt?: string;
+  };
+  status: LiveSessionStatusType;
+  canJoin: boolean;
+  startsInMinutes: number;
+  formattedTime: string;
+  startsInDisplay: string;
+  timeRemainingMessage: string;
+  activeUntil: string;
+  tier: 'ruta_abierta' | 'inscripcion_completa' | 'invitado';
+  canAccess: boolean;
+  meetUrl: string | null;
+  upgradePrompt: {
+    title: string;
+    message: string;
+    actionText: string;
+    contactUrl: string;
+  } | null;
+}
+
+/**
+ * Módulo Profundo: SesionEnVivoManager
+ * Oculta reglas de activación de 15 minutos, enmascaramiento de enlaces para Ruta Abierta
+ * y persistencia en borde detrás de un seam LiveSessionRepository.
+ */
+export class SesionEnVivoManager {
+  constructor(private repo: LiveSessionRepository) {}
+
+  async getConfiguredSession(): Promise<LiveSession> {
+    return this.repo.get();
+  }
+
+  async updateSession(updates: Partial<LiveSession>): Promise<LiveSession> {
+    const current = await this.repo.get();
+    const updated: LiveSession = {
+      ...current,
+      ...updates,
+    };
+    await this.repo.save(updated);
+    // Mantener sincronizado el fallback en memoria
+    updateConfiguredLiveSession(updated);
+    return updated;
+  }
+
+  async getSessionStatus(now: Date = new Date()): Promise<LiveSessionInfo> {
+    const session = await this.repo.get();
+    return getLiveSessionStatus(session, now);
+  }
+
+  async getStudentView(
+    student: Estudiante | null,
+    now: Date = new Date()
+  ): Promise<LiveSessionStudentView> {
+    const session = await this.repo.get();
+    const statusInfo = getLiveSessionStatus(session, now);
+
+    let tier: 'ruta_abierta' | 'inscripcion_completa' | 'invitado' = 'invitado';
+    let canAccess = false;
+
+    if (student) {
+      tier = student.nivel_acceso;
+      if (hasFullAccess(student)) {
+        canAccess = true;
+      }
+    }
+
+    const upgradePrompt = !canAccess
+      ? {
+          title: 'Talleres en Directo con tu Tutor',
+          message:
+            'Pase a la Inscripción Completa para desbloquear los talleres grupales en vivo con su tutor y recibir acompañamiento personalizado paso a paso.',
+          actionText: 'Solicitar Inscripción Completa',
+          contactUrl:
+            'https://wa.me/573000000000?text=Hola,%20deseo%20dar%20el%20paso%20a%20la%20Inscripción%20Completa%20en%20LDDIGITALCO.',
+        }
+      : null;
+
+    return {
+      success: true,
+      session: {
+        id: statusInfo.session.id,
+        title: statusInfo.session.title,
+        description: statusInfo.session.description,
+        scheduledAt: statusInfo.session.scheduledAt,
+        durationMinutes: statusInfo.session.durationMinutes,
+        nextScheduledAt: statusInfo.session.nextScheduledAt,
+      },
+      status: statusInfo.status,
+      canJoin: statusInfo.canJoin,
+      startsInMinutes: statusInfo.startsInMinutes,
+      formattedTime: statusInfo.formattedTime,
+      startsInDisplay: statusInfo.startsInDisplay,
+      timeRemainingMessage: statusInfo.timeRemainingMessage,
+      activeUntil: statusInfo.activeUntil,
+      tier,
+      canAccess,
+      meetUrl: canAccess ? statusInfo.session.meetUrl : null,
+      upgradePrompt,
+    };
+  }
+}
+
+import { D1LiveSessionRepository, MemoryLiveSessionRepository } from './live-session-repository';
+
+export function getSesionEnVivoManagerFromContext(context: any): SesionEnVivoManager {
+  const db = (context.locals as any)?.runtime?.env?.DB || (context as any).db || (context as any).locals?.runtime?.env?.DB;
+  if (db) {
+    return new SesionEnVivoManager(new D1LiveSessionRepository(db));
+  }
+  return new SesionEnVivoManager(new MemoryLiveSessionRepository(getConfiguredLiveSession()));
+}
+
+
+

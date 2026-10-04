@@ -122,4 +122,43 @@ describe('Player Controller', () => {
     expect(controller.getProgressPercentage()).toBe(100);
     expect(onAllCompleted).toHaveBeenCalled();
   });
+
+  it('integrates seamlessly with VideoPlayerAdapter seam via MockVideoAdapter', async () => {
+    const { MockVideoAdapter } = await import('../src/lib/courses/video-player-adapter');
+
+    const videoAdapter = new MockVideoAdapter();
+    const saveProgressFn = vi.fn().mockResolvedValue({ success: true });
+
+    const controller = new PlayerController({
+      route,
+      initialCapsuleIndex: 0,
+      saveProgressFn,
+      onCapsuleChange: (capsule) => {
+        videoAdapter.loadVideo(capsule.youtubeId);
+      },
+    });
+
+    videoAdapter.mount('test-video-frame', controller.getCurrentCapsule().youtubeId);
+    expect(videoAdapter.isReady).toBe(true);
+    expect(videoAdapter.currentVideoId).toBe('dQw4w9WgXcQ');
+
+    // Hook video ended
+    videoAdapter.onEnded(() => {
+      controller.handlePlayerEnded();
+    });
+
+    // Simulate video finishing
+    videoAdapter.triggerEnded();
+
+    expect(controller.isCurrentCapsuleCompleted()).toBe(true);
+    expect(saveProgressFn).toHaveBeenCalledWith('configurar-celular-vista', true);
+
+    // Switch capsule
+    controller.nextCapsule();
+    expect(videoAdapter.currentVideoId).toBe('jNQXAC9IVRw');
+
+    videoAdapter.destroy();
+    expect(videoAdapter.mountedElementId).toBeNull();
+  });
 });
+

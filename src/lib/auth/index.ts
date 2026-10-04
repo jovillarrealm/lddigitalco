@@ -1,5 +1,4 @@
 import { AccesoEstudiante } from './acceso-estudiante';
-import { AuthService } from './service';
 import { getEmailService } from '../email';
 import { createInMemoryD1 } from '../db/d1-memory';
 import type { D1Database } from '../db/types';
@@ -41,9 +40,13 @@ function getDevDb(): D1Database {
         creado_en TEXT NOT NULL,
         FOREIGN KEY (estudiante_id) REFERENCES estudiantes(id) ON DELETE CASCADE
       );
-      CREATE INDEX IF NOT EXISTS idx_consultas_estudiante ON consultas(estudiante_id);
-      CREATE INDEX IF NOT EXISTS idx_consultas_slug ON consultas(microcapsula_slug);
+      CREATE TABLE IF NOT EXISTS configuracion (
+        clave TEXT PRIMARY KEY,
+        valor TEXT NOT NULL,
+        actualizado_en TEXT NOT NULL
+      );
     `);
+
   }
   return devDb;
 }

@@ -410,3 +410,12 @@ export function initBrowserOfflineSync(): SyncManager {
   return manager;
 }
 
+export async function saveProgressWithOfflineSync(
+  microcapsulaSlug: string,
+  completado: boolean = true,
+  rutaSlug?: string
+): Promise<SaveProgressResult> {
+  const manager = initBrowserOfflineSync();
+  return manager.saveProgress({ microcapsulaSlug, completado, rutaSlug });
+}
+

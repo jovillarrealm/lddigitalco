@@ -1,9 +1,9 @@
 // LDDIGITALCO — Endpoint de Configuración de Sesión en Vivo
-// Permite al Administrador actualizar fecha, hora, duración y enlace de Zoom/Meet
+// Adaptador HTTP delgado delegando al módulo profundo SesionEnVivoManager
 
 import type { APIRoute } from 'astro';
 import { getAuthServiceFromContext, getEnvFromContext } from '../../../lib/auth';
-import { updateConfiguredLiveSession, getUpcomingLiveSession, getConfiguredLiveSession } from '../../../lib/courses/live-session';
+import { getSesionEnVivoManagerFromContext } from '../../../lib/courses/live-session';
 
 export const prerender = false;
 
@@ -14,9 +14,10 @@ function checkAdminAuth(request: Request, env: Record<string, any>, session: any
   return adminKeyHeader === expectedKey;
 }
 
-export const GET: APIRoute = async () => {
-  const current = getConfiguredLiveSession();
-  const status = getUpcomingLiveSession();
+export const GET: APIRoute = async (context) => {
+  const liveManager = getSesionEnVivoManagerFromContext(context);
+  const current = await liveManager.getConfiguredSession();
+  const status = await liveManager.getSessionStatus();
   return new Response(JSON.stringify({ success: true, session: current, status }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
@@ -59,8 +60,9 @@ export const POST: APIRoute = async (context) => {
   if (durationMinutes && typeof durationMinutes === 'number') updates.durationMinutes = durationMinutes;
   if (nextScheduledAt && typeof nextScheduledAt === 'string') updates.nextScheduledAt = nextScheduledAt.trim();
 
-  const updatedSession = updateConfiguredLiveSession(updates);
-  const liveInfo = getUpcomingLiveSession();
+  const liveManager = getSesionEnVivoManagerFromContext(context);
+  const updatedSession = await liveManager.updateSession(updates);
+  const liveInfo = await liveManager.getSessionStatus();
 
   return new Response(
     JSON.stringify({
